@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 
-// Connect to the host machine's IP dynamically for LAN support
-const SERVER_URL = `http://${window.location.hostname}:3001`;
+// Smart connection routing:
+// - If built (production mode), use the exact origin (this handles Ngrok perfectly)
+// - If in dev mode, try environment variables, or fallback to LAN IP
+const SERVER_URL = import.meta.env.PROD
+    ? window.location.origin
+    : (import.meta.env.VITE_BACKEND_URL || `http://${window.location.hostname}:3001`);
 
 export default function useSocket() {
     const socketRef = useRef(null);
@@ -28,6 +32,7 @@ export default function useSocket() {
 
     useEffect(() => {
         const socket = io(SERVER_URL, {
+            path: '/survival/socket.io',
             transports: ['websocket'],
         });
         socketRef.current = socket;

@@ -20,7 +20,11 @@ export default function Lobby({ connected, roomList, createRoom, joinRoom, refre
     useEffect(() => {
         const fetchLeaderboard = async () => {
             try {
-                const res = await fetch('http://localhost:3001/api/leaderboard');
+                const leaderboardUrl = import.meta.env.PROD
+                    ? '/survival/api/leaderboard'
+                    : `http://${window.location.hostname}:3001/api/leaderboard`;
+
+                const res = await fetch(leaderboardUrl);
                 if (res.ok) {
                     const data = await res.json();
                     setGlobalLeaderboard(data);

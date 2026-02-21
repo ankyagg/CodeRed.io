@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const path = require('path');
 require('dotenv').config();
 
 const { setupSocketHandlers } = require('./sockets/handler');
@@ -25,9 +26,19 @@ mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('📦 Connected to MongoDB Atlas'))
     .catch((err) => console.error('❌ MongoDB connection error:', err));
 
-// ── Health check endpoint ──
-app.get('/', (req, res) => {
+// ── Serve Static Frontend (Production / Internet Play) ──
+const frontendDistPath = path.join(__dirname, '../frontend/dist');
+app.use(express.static(frontendDistPath));
+
+// ── Health check endpoint API ──
+app.get('/api/health', (req, res) => {
     res.json({ status: 'Survival Sandbox server running', rooms: 'Use socket events to manage rooms' });
+});
+
+// Fallback all routes to index.html for React Router compatibility
+app.use((req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) return next();
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
 });
 
 // ── Leaderboard API ──

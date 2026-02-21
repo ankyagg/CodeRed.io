@@ -620,7 +620,7 @@
                 <div class="game-grid">
 
                     <!-- Game 1: Survival Sandbox -->
-                    <a class="game-card survival" id="card-survival" onclick="openGame(5173)" href="#">
+                    <a class="game-card survival" id="card-survival" href="/survival/" target="_blank">
                         <div class="card-header">
                             <div class="card-icon">⛏️</div>
                             <span class="card-status status-live">● LIVE</span>
@@ -635,7 +635,7 @@
                     </a>
 
                     <!-- Game 2: Escape Room -->
-                    <a class="game-card escape" id="card-escape" onclick="openGame(5175)" href="#">
+                    <a class="game-card escape" id="card-escape" href="/escape/" target="_blank">
                         <div class="card-header">
                             <div class="card-icon">🔐</div>
                             <span class="card-status">SOON</span>
@@ -650,7 +650,7 @@
                     </a>
 
                     <!-- Game 3: Dark Room Survival -->
-                    <a class="game-card darkroom" id="card-darkroom" onclick="openGame(5176)" href="#">
+                    <a class="game-card darkroom" id="card-darkroom" href="/darkroom/" target="_blank">
                         <div class="card-header">
                             <div class="card-icon">🔦</div>
                             <span class="card-status">SOON</span>
@@ -717,13 +717,8 @@
     </div>
 
     <script>
-        function openGame(port) {
-            const host = window.location.hostname || 'localhost';
-            window.open(`http://${host}:${port}`, '_blank');
-        }
-
-        // Prevent default anchor behavior for game cards using onclick
-        document.querySelectorAll('.game-card[onclick]').forEach(card => {
+        // Prevent default anchor behavior for disabled game cards only
+        document.querySelectorAll('.game-card.disabled').forEach(card => {
             card.addEventListener('click', e => e.preventDefault());
         });
     </script>
