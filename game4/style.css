@@ -1,0 +1,1013 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,700;1,900&family=Barlow:wght@400;600;700&display=swap');
+
+/* ── Reset ───────────────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    font-family: 'Barlow', system-ui, sans-serif;
+    /* NBA palette */
+    --red: #C8102E;
+    --red-dark: #8B0000;
+    --gold: #FDB927;
+    --gold-dim: #b8861e;
+    --blue: #1D428A;
+    --navy: #06080f;
+    --dark: #0c111f;
+    --panel: rgba(8, 10, 20, 0.88);
+    --border: rgba(200, 16, 46, 0.35);
+    color: #fff;
+}
+
+body {
+    background: var(--navy);
+    min-height: 100dvh;
+    overflow-x: hidden;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.mt-1 {
+    margin-top: 1rem;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   LOBBY
+══════════════════════════════════════════════════════════════════════════════ */
+#lobby-screen {
+    min-height: 100dvh;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 1rem 3rem;
+    overflow: hidden;
+}
+
+/* Full arena background */
+#lobby-screen::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: url('/arena_bg.png') center center / cover no-repeat;
+    opacity: 0.45;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Dark gradient overlay */
+#lobby-screen::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+        radial-gradient(ellipse at 50% 0%, rgba(200, 16, 46, 0.15) 0%, transparent 60%),
+        linear-gradient(180deg, rgba(6, 8, 15, 0.4) 0%, rgba(6, 8, 15, 0.85) 55%, #06080f 100%);
+    z-index: 0;
+    pointer-events: none;
+}
+
+.lobby-hero {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 2.5rem 0 1.5rem;
+}
+
+/* ── Logo ── */
+.logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-style: italic;
+    font-size: clamp(3.5rem, 12vw, 6.5rem);
+    font-weight: 900;
+    letter-spacing: -2px;
+    line-height: 1;
+    /* NBA red → gold gradient */
+    background: linear-gradient(170deg, #fff 0%, var(--gold) 30%, var(--red) 70%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 30px rgba(253, 185, 39, 0.55)) drop-shadow(0 0 60px rgba(200, 16, 46, 0.35));
+    text-transform: uppercase;
+}
+
+.tagline {
+    color: rgba(255, 255, 255, 0.55);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.78rem;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    margin-top: 0.4rem;
+}
+
+/* Red accent line under logo */
+.logo-divider {
+    width: 120px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--red), var(--gold), var(--red), transparent);
+    margin: 0.9rem auto 0.6rem;
+    border-radius: 2px;
+}
+
+.server-status {
+    font-size: 0.78rem;
+    font-family: 'Barlow Condensed', sans-serif;
+    color: var(--gold);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    min-height: 1.1rem;
+}
+
+/* ── LAN Banner ── */
+.lan-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: linear-gradient(135deg, rgba(200, 16, 46, 0.12), rgba(253, 185, 39, 0.08));
+    border: 1px solid rgba(253, 185, 39, 0.3);
+    border-radius: 0.5rem;
+    padding: 0.65rem 1.2rem;
+    margin-top: 1rem;
+    max-width: 540px;
+    position: relative;
+    overflow: hidden;
+    animation: gold-pulse 2.5s ease-in-out infinite;
+}
+
+.lan-banner::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--gold), var(--red));
+}
+
+@keyframes gold-pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 12px rgba(253, 185, 39, 0.1);
+    }
+
+    50% {
+        box-shadow: 0 0 28px rgba(253, 185, 39, 0.28);
+    }
+}
+
+.lan-icon {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.lan-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+}
+
+.lan-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.45);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.lan-url-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.lan-url-row code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--gold);
+    word-break: break-all;
+}
+
+.copy-pill {
+    background: rgba(253, 185, 39, 0.15);
+    border: 1px solid rgba(253, 185, 39, 0.4);
+    color: var(--gold);
+    padding: 2px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.74rem;
+    font-weight: 700;
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+}
+
+.copy-pill:hover {
+    background: rgba(253, 185, 39, 0.3);
+    color: #fff;
+}
+
+/* Multi-IP rows */
+.lan-link-row {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+    padding: 0.15rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.lan-link-row:last-child {
+    border-bottom: none;
+}
+
+.lan-iface {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.66rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: 52px;
+}
+
+.lan-link-code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--gold);
+    flex: 1;
+}
+
+/* ── Lobby body layout ── */
+.lobby-body {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 900px;
+    display: grid;
+    grid-template-columns: 1fr 1.3fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+@media (max-width: 640px) {
+    .lobby-body {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Panels ── */
+.panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+    padding: 1.75rem;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    position: relative;
+    transition: border-color 0.25s;
+}
+
+.panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--red), var(--gold), var(--red));
+}
+
+.panel:hover {
+    border-color: rgba(253, 185, 39, 0.4);
+}
+
+.panel h2 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-style: italic;
+    font-weight: 900;
+    font-size: 1.4rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #fff;
+    margin-bottom: 0.25rem;
+}
+
+.panel-desc {
+    color: rgba(255, 255, 255, 0.38);
+    font-size: 0.8rem;
+    margin-bottom: 1.2rem;
+    line-height: 1.5;
+}
+
+/* ── Fields ── */
+.field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-bottom: 0.85rem;
+}
+
+.field-group label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+.field-group input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(200, 16, 46, 0.3);
+    border-radius: 0;
+    padding: 0.7rem 1rem;
+    color: #fff;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+}
+
+.field-group input::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.field-group input:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px rgba(253, 185, 39, 0.15), inset 0 0 12px rgba(253, 185, 39, 0.05);
+}
+
+/* ── Buttons ── */
+.btn {
+    display: block;
+    width: 100%;
+    padding: 0.8rem 1.5rem;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-style: italic;
+    font-size: 1.1rem;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: none;
+    transition: transform 0.12s, box-shadow 0.15s, filter 0.15s;
+    text-align: center;
+    margin-top: 0.65rem;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+
+.btn:hover {
+    transform: translateY(-2px) scale(1.01);
+    filter: brightness(1.1);
+}
+
+.btn:active {
+    transform: translateY(0) scale(0.99);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--red), #a80e22);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(200, 16, 46, 0.5);
+}
+
+.btn-primary:hover {
+    box-shadow: 0 6px 28px rgba(200, 16, 46, 0.7);
+}
+
+.btn-yellow {
+    background: linear-gradient(135deg, var(--gold), #e8a417);
+    color: #0c0a05;
+    font-size: 0.88rem;
+    padding: 0.5rem 1.1rem;
+    width: auto;
+    margin-top: 0;
+    clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+}
+
+.btn-ghost {
+    background: transparent;
+    color: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 0.88rem;
+    clip-path: none;
+    border-radius: 0;
+}
+
+.btn-ghost:hover {
+    border-color: rgba(253, 185, 39, 0.4);
+    color: var(--gold);
+}
+
+/* ── Rooms ── */
+.rooms-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.3rem;
+}
+
+.live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--red);
+    box-shadow: 0 0 8px var(--red);
+    animation: blink 1.2s ease-in-out infinite;
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.25;
+    }
+}
+
+.rooms-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    max-height: 330px;
+    overflow-y: auto;
+    padding-right: 2px;
+}
+
+.rooms-list::-webkit-scrollbar {
+    width: 2px;
+}
+
+.rooms-list::-webkit-scrollbar-thumb {
+    background: var(--red);
+    border-radius: 2px;
+}
+
+.no-rooms {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 2rem 0;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-style: italic;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.room-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(200, 16, 46, 0.2);
+    border-left: 3px solid var(--red);
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.room-card:hover {
+    border-color: var(--gold);
+    background: rgba(253, 185, 39, 0.05);
+}
+
+.room-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.room-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-style: italic;
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #fff;
+}
+
+.room-meta {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.38);
+}
+
+.room-meta code {
+    background: rgba(255, 255, 255, 0.07);
+    padding: 1px 5px;
+    font-family: monospace;
+    font-size: 0.73rem;
+    color: var(--gold);
+    letter-spacing: 1px;
+}
+
+.rooms-status {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   WAIT SCREEN
+══════════════════════════════════════════════════════════════════════════════ */
+#wait-screen {
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: var(--navy);
+    position: relative;
+}
+
+#wait-screen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url('/arena_bg.png') center center / cover no-repeat;
+    opacity: 0.25;
+}
+
+#wait-screen::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 50%, rgba(200, 16, 46, 0.08), transparent 70%),
+        linear-gradient(to bottom, rgba(6, 8, 15, 0.5), rgba(6, 8, 15, 0.9));
+}
+
+#wait-screen.hidden {
+    display: none !important;
+}
+
+.wait-card {
+    position: relative;
+    z-index: 1;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+    padding: 3rem 2.5rem;
+    text-align: center;
+    max-width: 420px;
+    width: 100%;
+    backdrop-filter: blur(24px);
+    box-shadow: 0 0 60px rgba(200, 16, 46, 0.2), 0 0 120px rgba(253, 185, 39, 0.08);
+}
+
+.wait-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--red), var(--gold), var(--red));
+}
+
+.wait-icon {
+    font-size: 3.5rem;
+    margin-bottom: 0.75rem;
+    animation: bounce 1.2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-12px);
+    }
+}
+
+.wait-card h2 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-style: italic;
+    font-weight: 900;
+    font-size: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 1.5rem;
+    color: var(--gold);
+}
+
+.room-id-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: rgba(200, 16, 46, 0.1);
+    border: 1px solid rgba(200, 16, 46, 0.3);
+    padding: 0.65rem 1.25rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.room-id-box code {
+    font-family: 'Courier New', monospace;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--gold);
+    letter-spacing: 4px;
+}
+
+.copy-btn {
+    background: rgba(253, 185, 39, 0.12);
+    border: 1px solid rgba(253, 185, 39, 0.3);
+    color: var(--gold);
+    padding: 3px 10px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-family: 'Barlow Condensed', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: background 0.15s;
+}
+
+.copy-btn:hover {
+    background: rgba(253, 185, 39, 0.25);
+    color: #fff;
+}
+
+.wait-hint {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.8rem;
+    margin-bottom: 1.5rem;
+}
+
+.spinner {
+    width: 38px;
+    height: 38px;
+    border: 3px solid rgba(255, 255, 255, 0.08);
+    border-top-color: var(--red);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto 1.5rem;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   GAME SCREEN  — NBA 2K HUD
+══════════════════════════════════════════════════════════════════════════════ */
+#game-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100dvh;
+    background: #06080e;
+    padding: 0;
+    position: relative;
+}
+
+/* Arena overlay behind game */
+#game-screen::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: url('/arena_bg.png') center center / cover no-repeat;
+    opacity: 0.12;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Top bar — like NBA 2K scoreboard stripe */
+.game-header {
+    width: 100%;
+    background: linear-gradient(90deg, #0a0005 0%, #180008 40%, #180008 60%, #0a0005 100%);
+    border-bottom: 2px solid var(--red);
+    padding: 0.35rem 1.5rem;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.game-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(200, 16, 46, 0.08) 50%, transparent 100%);
+}
+
+.logo-sm {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-style: italic;
+    font-weight: 900;
+    font-size: clamp(1.4rem, 5vw, 1.9rem);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #fff 0%, var(--gold) 45%, var(--red) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 10px rgba(253, 185, 39, 0.4));
+}
+
+/* ── Scoreboard HUD — key NBA 2K element ── */
+#game-info {
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    align-items: stretch;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 0.35rem;
+    height: 46px;
+    overflow: hidden;
+}
+
+/* P1 red team side */
+.player-indicator#p1-indicator {
+    background: linear-gradient(90deg, rgba(200, 16, 46, 0.7) 0%, rgba(200, 16, 46, 0.2) 100%);
+    border-bottom: 2px solid var(--red);
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    opacity: 0.45;
+    transition: opacity 0.2s;
+    clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+}
+
+/* P2 blue/gold team side */
+.player-indicator#p2-indicator {
+    background: linear-gradient(90deg, rgba(29, 66, 138, 0.2) 0%, rgba(29, 66, 138, 0.7) 100%);
+    border-bottom: 2px solid var(--blue);
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    flex-direction: row-reverse;
+    opacity: 0.45;
+    transition: opacity 0.2s;
+    clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.player-indicator.active {
+    opacity: 1 !important;
+}
+
+.player-indicator#p1-indicator.active {
+    border-bottom-color: var(--gold);
+}
+
+.player-indicator#p2-indicator.active {
+    border-bottom-color: var(--gold);
+}
+
+.player-indicator span:not(.dot):not(.score-badge) {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 0.88rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.dot.red {
+    background: var(--red);
+    box-shadow: 0 0 8px var(--red);
+}
+
+.dot.yellow {
+    background: var(--gold);
+    box-shadow: 0 0 8px var(--gold);
+}
+
+/* Score badges — big like NBA scoreboard */
+.score-badge {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-style: italic;
+    font-weight: 900;
+    font-size: 1.4rem;
+    letter-spacing: 0;
+    min-width: 32px;
+    text-align: center;
+    line-height: 1;
+}
+
+.red-badge {
+    color: #ff6b7a;
+}
+
+.yellow-badge {
+    color: var(--gold);
+}
+
+/* Center status */
+#status-message {
+    background: rgba(0, 0, 0, 0.7);
+    border-bottom: 2px solid rgba(253, 185, 39, 0.5);
+    padding: 0 0.9rem;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 1.5px;
+    color: var(--gold);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-width: 140px;
+}
+
+/* Canvas */
+#game-container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 560px;
+    aspect-ratio: 560 / 700;
+    border: 1px solid rgba(200, 16, 46, 0.3);
+    border-top: none;
+    box-shadow: 0 0 50px rgba(200, 16, 46, 0.2), 0 0 100px rgba(0, 0, 0, 0.7);
+    cursor: crosshair;
+    overflow: hidden;
+}
+
+#game-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Overlay */
+#ui-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+/* ── Win modal — NBA Championship style ── */
+#win-modal {
+    background: linear-gradient(160deg, rgba(6, 8, 15, 0.97) 0%, rgba(18, 5, 5, 0.97) 100%);
+    backdrop-filter: blur(28px);
+    padding: 2.5rem 3rem;
+    pointer-events: auto;
+    text-align: center;
+    animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    box-shadow: 0 0 80px rgba(200, 16, 46, 0.35), 0 0 40px rgba(253, 185, 39, 0.18);
+    min-width: 300px;
+    position: relative;
+    overflow: hidden;
+    clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+}
+
+/* Top accent bar */
+#win-modal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--red), var(--gold), var(--red));
+}
+
+/* Bottom accent */
+#win-modal::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+@keyframes slideIn {
+    from {
+        transform: scale(0.65) translateY(-20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+#win-modal h2 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-style: italic;
+    font-weight: 900;
+    font-size: 1.1rem;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 0.5rem;
+}
+
+#winner-text {
+    display: block;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-style: italic;
+    font-weight: 900;
+    font-size: 2.2rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    line-height: 1.1;
+    margin-bottom: 0.3rem;
+    filter: drop-shadow(0 0 20px currentColor);
+}
+
+.win-subtext {
+    color: rgba(255, 255, 255, 0.45);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-style: italic;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 1.75rem;
+}
+
+.btn-modal-restart {
+    background: linear-gradient(135deg, var(--red), #a80e22);
+    color: #fff;
+    border: none;
+    padding: 0.8rem 2.5rem;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-style: italic;
+    font-size: 1.15rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    transition: filter 0.15s, transform 0.12s;
+    box-shadow: 0 4px 24px rgba(200, 16, 46, 0.5);
+}
+
+.btn-modal-restart:hover {
+    filter: brightness(1.15);
+    transform: scale(1.03);
+}
+
+.game-footer {
+    position: relative;
+    z-index: 1;
+    margin-top: 0.4rem;
+    color: rgba(255, 255, 255, 0.18);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: center;
+}

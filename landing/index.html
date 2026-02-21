@@ -326,10 +326,9 @@
             box-shadow: 0 0 0 2px #0d0d2b, 0 0 0 4px #fbbf24, 0 0 20px rgba(251, 191, 36, 0.3);
         }
 
-        .game-card.game4 {
-            border-color: #555;
-            box-shadow: 0 0 0 2px #0d0d2b, 0 0 0 4px #555;
-            opacity: 0.5;
+        .game-card.hoop {
+            border-color: #f97316;
+            box-shadow: 0 0 0 2px #0d0d2b, 0 0 0 4px #f97316, 0 0 20px rgba(249, 115, 22, 0.3);
         }
 
         .game-card:not(.disabled):hover {
@@ -375,8 +374,8 @@
             color: #fbbf24;
         }
 
-        .game-card.game4 .card-status {
-            color: #555;
+        .game-card.hoop .card-status {
+            color: #f97316;
         }
 
         .status-live {
@@ -442,6 +441,10 @@
 
         .game-card.darkroom .play-btn {
             color: #fbbf24;
+        }
+
+        .game-card.hoop .play-btn {
+            color: #f97316;
         }
 
         .game-card:hover .play-btn {
@@ -664,19 +667,20 @@
                         </div>
                     </a>
 
-                    <!-- Game 4: TBD -->
-                    <div class="game-card game4 disabled">
+                    <!-- Game 4: HOOP-4 -->
+                    <a class="game-card hoop" id="card-hoop" href="/hoop/" target="_blank">
                         <div class="card-header">
-                            <div class="card-icon">🎮</div>
-                            <span class="card-status">PIPELINE</span>
+                            <div class="card-icon">🏀</div>
+                            <span class="card-status status-live">● LIVE</span>
                         </div>
-                        <div class="card-title">COMING SOON</div>
-                        <div class="card-desc">A new multiplayer experience is in the works. Stay tuned.</div>
+                        <div class="card-title">HOOP-4</div>
+                        <div class="card-desc">Shoot hoops to connect 4 in a row. Multiplayer basketball challenge!
+                        </div>
                         <div class="card-footer">
-                            <span class="card-players">👥 MULTIPLAYER</span>
-                            <span class="play-btn">LOCKED</span>
+                            <span class="card-players">👥 1v1</span>
+                            <span class="play-btn">PLAY ▶</span>
                         </div>
-                    </div>
+                    </a>
 
                 </div>
 

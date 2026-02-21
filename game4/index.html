@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOOP-4 — Basketball Connect 4 Multiplayer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,900;1,700;1,900&family=Barlow:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+
+    <!-- ══════════════════════════════════════════════════════════════════════════ -->
+    <!--  LOBBY SCREEN                                                             -->
+    <!-- ══════════════════════════════════════════════════════════════════════════ -->
+    <div id="lobby-screen">
+        <div class="lobby-hero">
+            <h1 class="logo">HOOP-4</h1>
+            <div class="logo-divider"></div>
+            <p class="tagline">The Premier Multiplayer Basketball Challenge</p>
+            <p id="server-status" class="server-status">PREPARING ARENA…</p>
+
+            <!-- LAN share banner — shown once server responds -->
+            <div id="lan-banner" class="lan-banner hidden">
+                <span class="lan-icon">📡</span>
+                <div class="lan-info">
+                    <span class="lan-label">Share with friends on the same WiFi:</span>
+                    <div class="lan-url-row">
+                        <code id="lan-url">…</code>
+                        <button id="lan-copy-btn" class="copy-pill">Copy</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lobby-body">
+            <!-- Create Room Panel -->
+            <section class="panel create-panel">
+                <h2>Create a Room</h2>
+                <p class="panel-desc">Start a new game and share the Room ID with a friend.</p>
+
+                <div class="field-group">
+                    <label for="player-name">Your Name</label>
+                    <input id="player-name" type="text" placeholder="e.g. Manav" maxlength="20" autocomplete="off">
+                </div>
+
+                <div class="field-group">
+                    <label for="room-name-input">Room Name</label>
+                    <input id="room-name-input" type="text" placeholder="e.g. Friday Night Hoops" maxlength="30"
+                        autocomplete="off">
+                </div>
+
+                <button id="create-btn" class="btn btn-primary">🏀 Create Room</button>
+                <button id="local-btn" class="btn btn-ghost">🎮 Local 2-Player</button>
+            </section>
+
+            <!-- Global Rooms Panel -->
+            <section class="panel rooms-panel">
+                <div class="rooms-header">
+                    <h2>Open Rooms</h2>
+                    <span class="live-dot" title="Live updates"></span>
+                </div>
+                <p class="panel-desc">Join an existing room to challenge another player.</p>
+
+                <p id="rooms-status" class="rooms-status">Fetching rooms…</p>
+                <div id="rooms-list" class="rooms-list"></div>
+            </section>
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════════════════ -->
+    <!--  WAITING SCREEN                                                           -->
+    <!-- ══════════════════════════════════════════════════════════════════════════ -->
+    <div id="wait-screen" class="hidden">
+        <div class="wait-card">
+            <div class="wait-icon">🏀</div>
+            <h2 id="wait-msg">Waiting for opponent…</h2>
+            <div class="room-id-box">
+                <span>Room ID:</span>
+                <code id="wait-room-id">———</code>
+                <button class="copy-btn"
+                    onclick="navigator.clipboard.writeText(document.getElementById('wait-room-id').textContent)">Copy</button>
+            </div>
+            <p class="wait-hint">Share this Room ID with your friend so they can join.</p>
+            <div class="spinner"></div>
+            <button id="cancel-btn" class="btn btn-ghost mt-1">Cancel</button>
+        </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════════════════════════════════════ -->
+    <!--  GAME SCREEN                                                              -->
+    <!-- ══════════════════════════════════════════════════════════════════════════ -->
+    <div id="game-screen" class="hidden">
+        <header class="game-header">
+            <h1 class="logo-sm">HOOP-4</h1>
+        </header>
+
+        <div id="game-info">
+            <div class="player-indicator" id="p1-indicator">
+                <span class="dot red"></span>
+                <span id="p1-name-label">Player 1</span>
+                <span class="score-badge red-badge" id="p1-score">0</span>
+            </div>
+            <div id="status-message">Loading…</div>
+            <div class="player-indicator" id="p2-indicator">
+                <span class="score-badge yellow-badge" id="p2-score">0</span>
+                <span id="p2-name-label">Player 2</span>
+                <span class="dot yellow"></span>
+            </div>
+        </div>
+
+        <main id="game-container">
+            <canvas id="game-canvas"></canvas>
+            <div id="ui-overlay">
+                <div id="win-modal" class="hidden">
+                    <h2>🏆 Victory!</h2>
+                    <span id="winner-text"></span>
+                    <p id="win-subtext" class="win-subtext"></p>
+                    <button id="restart-btn" class="btn-modal-restart">Play Again</button>
+                </div>
+            </div>
+        </main>
+
+        <footer class="game-footer">Drag ball downward &amp; release to launch upward · Connect 4 to win!</footer>
+    </div>
+
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>
