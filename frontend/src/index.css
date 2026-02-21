@@ -2,23 +2,88 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #0a0a0f;
-  font-family: 'Inter', system-ui, sans-serif;
+  background: #1a1a2e;
+  font-family: 'Press Start 2P', monospace;
   color: #e2e8f0;
+  image-rendering: pixelated;
 }
 
 ::-webkit-scrollbar {
   display: none;
+}
+
+/* ══════════════════════════════════════════
+   MINECRAFT CSS TEXTURES (pure CSS, no images)
+   ══════════════════════════════════════════ */
+
+/* Grass block top */
+.mc-grass {
+  background-color: #5d9e2f;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.08) 0px, rgba(0, 0, 0, 0.08) 2px, transparent 2px, transparent 8px),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.08) 0px, rgba(0, 0, 0, 0.08) 2px, transparent 2px, transparent 8px),
+    radial-gradient(circle at 20% 30%, rgba(100, 180, 50, 0.3) 0%, transparent 30%),
+    radial-gradient(circle at 70% 60%, rgba(80, 160, 30, 0.2) 0%, transparent 25%);
+}
+
+/* Dirt block */
+.mc-dirt {
+  background-color: #8b5e3c;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.07) 0px, rgba(0, 0, 0, 0.07) 2px, transparent 2px, transparent 8px),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.07) 0px, rgba(0, 0, 0, 0.07) 2px, transparent 2px, transparent 8px),
+    radial-gradient(circle at 15% 40%, rgba(160, 100, 60, 0.4) 0%, transparent 20%),
+    radial-gradient(circle at 75% 20%, rgba(100, 60, 30, 0.3) 0%, transparent 18%),
+    radial-gradient(circle at 50% 70%, rgba(140, 90, 50, 0.3) 0%, transparent 22%);
+}
+
+/* Stone block */
+.mc-stone {
+  background-color: #828282;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.06) 0px, rgba(0, 0, 0, 0.06) 2px, transparent 2px, transparent 10px),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.06) 0px, rgba(0, 0, 0, 0.06) 2px, transparent 2px, transparent 10px),
+    radial-gradient(circle at 25% 35%, rgba(120, 120, 120, 0.5) 0%, transparent 20%),
+    radial-gradient(circle at 65% 65%, rgba(90, 90, 90, 0.4) 0%, transparent 18%),
+    radial-gradient(circle at 80% 20%, rgba(110, 110, 110, 0.3) 0%, transparent 15%);
+}
+
+/* Wood plank */
+.mc-wood {
+  background-color: #a0722a;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.1) 0px, rgba(0, 0, 0, 0.1) 1px, transparent 1px, transparent 16px),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.06) 0px, rgba(0, 0, 0, 0.06) 1px, transparent 1px, transparent 8px),
+    linear-gradient(180deg, rgba(180, 130, 60, 0.2) 0%, rgba(140, 90, 30, 0.2) 100%);
+}
+
+/* Minecraft pixel-art style border (outset 3D effect) */
+.mc-border {
+  border-style: solid;
+  border-width: 4px;
+  border-color: #ffffff #555555 #555555 #ffffff;
+  box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.15), inset -2px -2px 0 rgba(0, 0, 0, 0.4);
+}
+
+.mc-border-inset {
+  border-style: solid;
+  border-width: 4px;
+  border-color: #555555 #ffffff #ffffff #555555;
+  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.3), inset -2px -2px 0 rgba(255, 255, 255, 0.1);
 }
 
 /* ══════════════════════════════════════════
@@ -32,11 +97,61 @@ html, body, #root {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(ellipse at 50% 20%, #1a1a2e 0%, #0a0a0f 70%);
   overflow: hidden;
+  /* Dark cave/night sky background */
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(80, 50, 20, 0.6) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 0%, rgba(10, 20, 50, 0.8) 0%, transparent 60%),
+    linear-gradient(180deg, #0a0e1a 0%, #101820 40%, #1a1008 100%);
 }
 
-/* Floating particles */
+/* Torch glow effects */
+.lobby-container::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  width: 300px;
+  height: 400px;
+  background: radial-gradient(ellipse at center bottom, rgba(255, 140, 0, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.lobby-container::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 8%;
+  width: 280px;
+  height: 380px;
+  background: radial-gradient(ellipse at center bottom, rgba(255, 120, 0, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+  animation: torch-flicker 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes torch-flicker {
+  0% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+
+  30% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+
+  70% {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+
+  100% {
+    opacity: 0.9;
+    transform: scale(1.02);
+  }
+}
+
+/* Floating dirt particles */
 .lobby-particles {
   position: absolute;
   inset: 0;
@@ -47,134 +162,191 @@ html, body, #root {
 .particle {
   position: absolute;
   bottom: -10px;
-  width: 4px;
-  height: 4px;
-  background: rgba(99, 102, 241, 0.4);
-  border-radius: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 0;
+  /* Square! */
   animation: float-up linear infinite;
 }
 
-.particle:nth-child(odd) {
-  background: rgba(16, 185, 129, 0.3);
-  width: 3px;
-  height: 3px;
+.particle:nth-child(3n) {
+  background: rgba(93, 158, 47, 0.5);
 }
 
-.particle:nth-child(3n) {
-  background: rgba(245, 158, 11, 0.3);
-  width: 5px;
-  height: 5px;
+/* grass */
+.particle:nth-child(3n+1) {
+  background: rgba(139, 94, 60, 0.4);
 }
+
+/* dirt */
+.particle:nth-child(3n+2) {
+  background: rgba(130, 130, 130, 0.3);
+}
+
+/* stone */
 
 @keyframes float-up {
   0% {
-    transform: translateY(0) scale(1);
+    transform: translateY(0) rotate(0deg);
     opacity: 0;
   }
+
   10% {
     opacity: 1;
   }
+
   90% {
-    opacity: 1;
+    opacity: 0.8;
   }
+
   100% {
-    transform: translateY(-100vh) scale(0.5);
+    transform: translateY(-100vh) rotate(180deg);
     opacity: 0;
   }
 }
 
-/* Main content */
+/* Ground blocks strip at bottom */
+.ground-strip {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  display: flex;
+  pointer-events: none;
+}
+
+.ground-block {
+  flex: 1;
+  height: 48px;
+  border-right: 2px solid rgba(0, 0, 0, 0.3);
+}
+
+.ground-block:nth-child(odd) {
+  background-color: #5d9e2f;
+}
+
+.ground-block:nth-child(even) {
+  background-color: #4e8a28;
+}
+
+/* ── MAIN CONTENT ── */
 .lobby-content {
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 480px;
-  padding: 24px;
+  max-width: 460px;
+  padding: 20px 16px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
 }
 
-/* Header */
+/* ── HEADER ── */
 .lobby-header {
   text-align: center;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .lobby-logo {
-  font-size: 56px;
-  margin-bottom: 8px;
-  animation: logo-pulse 2s ease-in-out infinite;
+  font-size: 52px;
+  margin-bottom: 10px;
+  display: block;
+  filter: drop-shadow(0 0 12px rgba(255, 200, 50, 0.6));
+  animation: logo-bob 1.5s ease-in-out infinite;
 }
 
-@keyframes logo-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
+@keyframes logo-bob {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
 }
 
 .lobby-title {
-  font-size: 32px;
-  font-weight: 800;
-  background: linear-gradient(135deg, #e2e8f0, #94a3b8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: 0.05em;
+  font-size: clamp(14px, 3vw, 20px);
+  font-weight: 400;
+  color: #ffffff;
+  letter-spacing: 2px;
+  /* Minecraft title text-shadow stack */
+  text-shadow:
+    3px 3px 0 #3f3f00,
+    0 0 20px rgba(255, 220, 50, 0.4);
+  margin-bottom: 2px;
 }
 
 .lobby-subtitle {
-  font-size: 13px;
-  color: #64748b;
-  margin-top: 8px;
+  font-size: 8px;
+  color: #a0a0a0;
+  margin-top: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  letter-spacing: 1px;
 }
 
 .status-dot {
   display: inline-block;
   width: 8px;
   height: 8px;
-  border-radius: 50%;
-  animation: pulse 2s ease-in-out infinite;
+  border-radius: 0;
+  /* square pixel dot */
+  animation: blink-dot 1.5s step-start infinite;
 }
 
 .status-dot.online {
-  background: #34d399;
-  box-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+  background: #55ff55;
+  box-shadow: 0 0 6px #55ff55;
 }
 
 .status-dot.offline {
-  background: #f87171;
-  box-shadow: 0 0 8px rgba(248, 113, 113, 0.5);
+  background: #ff5555;
+  box-shadow: 0 0 6px #ff5555;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+@keyframes blink-dot {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
 }
 
-/* Cards */
+/* ── CARDS (= Minecraft inventory panels) ── */
 .lobby-card {
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  border-radius: 16px;
-  padding: 24px;
-  transition: border-color 0.3s;
-}
-
-.lobby-card:hover {
-  border-color: rgba(148, 163, 184, 0.2);
+  background: #c6c6c6;
+  /* Stone/inventory panel texture */
+  background-image:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.04) 0px, rgba(0, 0, 0, 0.04) 2px, transparent 2px, transparent 8px),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.04) 0px, rgba(0, 0, 0, 0.04) 2px, transparent 2px, transparent 8px);
+  border-style: solid;
+  border-width: 4px;
+  border-color: #ffffff #555555 #555555 #ffffff;
+  box-shadow:
+    inset 2px 2px 0 rgba(255, 255, 255, 0.5),
+    inset -2px -2px 0 rgba(0, 0, 0, 0.3),
+    4px 4px 0 rgba(0, 0, 0, 0.5);
+  padding: 20px;
+  border-radius: 0;
 }
 
 .card-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #e2e8f0;
-  margin-bottom: 16px;
+  font-size: 10px;
+  font-weight: 400;
+  color: #3f3f3f;
+  margin-bottom: 14px;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .card-header {
@@ -187,56 +359,68 @@ html, body, #root {
   margin-bottom: 0;
 }
 
-/* Create Form */
+/* ── CREATE FORM ── */
 .create-form {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .room-input {
   flex: 1;
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.15);
-  border-radius: 10px;
-  padding: 12px 16px;
-  font-size: 14px;
-  color: #e2e8f0;
+  background: #000000;
+  border-style: solid;
+  border-width: 3px;
+  border-color: #555555 #aaaaaa #aaaaaa #555555;
+  box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.5);
+  padding: 10px 12px;
+  font-size: 9px;
+  color: #ffffff;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  font-family: inherit;
+  font-family: 'Press Start 2P', monospace;
+  border-radius: 0;
+  letter-spacing: 1px;
+  caret-color: #ffffff;
 }
 
 .room-input::placeholder {
-  color: #64748b;
+  color: #555555;
 }
 
 .room-input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  border-color: #5555ff #aaaaaa #aaaaaa #5555ff;
+  box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(85, 85, 255, 0.3);
 }
 
+/* Minecraft button style */
 .btn-create {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  padding: 12px 20px;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  background: #555555;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(0, 0, 0, 0.1) 100%);
+  color: #ffffff;
+  border-style: solid;
+  border-width: 3px;
+  border-color: #aaaaaa #373737 #373737 #aaaaaa;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.15), inset -1px -1px 0 rgba(0, 0, 0, 0.3);
+  padding: 10px 14px;
+  font-size: 7px;
+  font-weight: 400;
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+  transition: filter 0.05s;
   white-space: nowrap;
-  font-family: inherit;
+  font-family: 'Press Start 2P', monospace;
+  border-radius: 0;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 0 #3f3f3f;
 }
 
 .btn-create:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
+  filter: brightness(1.2);
+  background-color: #7aba4a;
+  border-color: #c0e88a #4a8020 #4a8020 #c0e88a;
 }
 
 .btn-create:active:not(:disabled) {
-  transform: translateY(0);
+  border-color: #373737 #aaaaaa #aaaaaa #373737;
+  box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.3), inset -1px -1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .btn-create:disabled {
@@ -246,116 +430,141 @@ html, body, #root {
 
 /* Refresh button */
 .btn-refresh {
-  background: rgba(30, 41, 59, 0.6);
-  border: 1px solid rgba(148, 163, 184, 0.15);
-  color: #94a3b8;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  background: #555555;
+  border-style: solid;
+  border-width: 3px;
+  border-color: #aaaaaa #373737 #373737 #aaaaaa;
+  color: #ffffff;
+  width: 38px;
+  height: 38px;
   font-size: 18px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: filter 0.1s, transform 0.3s;
+  font-family: 'Press Start 2P', monospace;
+  border-radius: 0;
+  text-shadow: 1px 1px 0 #3f3f3f;
+  flex-shrink: 0;
 }
 
 .btn-refresh:hover {
-  background: rgba(30, 41, 59, 0.9);
-  color: #e2e8f0;
+  filter: brightness(1.3);
   transform: rotate(90deg);
 }
 
 /* Empty state */
 .empty-rooms {
   text-align: center;
-  padding: 24px 0;
+  padding: 20px 0 8px;
 }
 
 .empty-icon {
-  font-size: 32px;
+  font-size: 28px;
   margin-bottom: 8px;
 }
 
 .empty-text {
-  color: #64748b;
-  font-size: 14px;
+  color: #3f3f3f;
+  font-size: 8px;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 /* Room list */
 .room-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   margin-top: 12px;
-  max-height: 240px;
+  max-height: 220px;
   overflow-y: auto;
 }
 
 .room-list::-webkit-scrollbar {
   display: block;
-  width: 4px;
+  width: 8px;
+}
+
+.room-list::-webkit-scrollbar-track {
+  background: #555555;
 }
 
 .room-list::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.2);
-  border-radius: 2px;
+  background: #888888;
+  border: 2px solid #555555;
 }
 
+/* Room item = inventory slot */
 .room-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  background: rgba(30, 41, 59, 0.5);
-  border: 1px solid rgba(148, 163, 184, 0.08);
-  border-radius: 12px;
-  transition: all 0.2s;
+  padding: 10px 12px;
+  background: #8b8b8b;
+  border-style: solid;
+  border-width: 3px;
+  border-color: #555555 #c0c0c0 #c0c0c0 #555555;
+  box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.2);
+  transition: filter 0.1s;
+  cursor: default;
+  border-radius: 0;
 }
 
 .room-item:hover {
-  background: rgba(30, 41, 59, 0.8);
-  border-color: rgba(148, 163, 184, 0.15);
+  filter: brightness(1.15);
+  border-color: #777777 #d0d0d0 #d0d0d0 #777777;
 }
 
 .room-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .room-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #e2e8f0;
+  font-size: 9px;
+  font-weight: 400;
+  color: #ffffff;
+  text-shadow: 1px 1px 0 #3f3f3f;
+  letter-spacing: 1px;
 }
 
 .room-players {
-  font-size: 12px;
-  color: #64748b;
+  font-size: 7px;
+  color: #cccccc;
+  letter-spacing: 1px;
 }
 
+/* Join = green Minecraft button */
 .btn-join {
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 18px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  background: #5aaa1a;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(0, 0, 0, 0.12) 100%);
+  color: #ffffff;
+  border-style: solid;
+  border-width: 3px;
+  border-color: #88dd44 #2a6600 #2a6600 #88dd44;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.15), inset -1px -1px 0 rgba(0, 0, 0, 0.25);
+  padding: 7px 14px;
+  font-size: 7px;
+  font-weight: 400;
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
-  font-family: inherit;
+  font-family: 'Press Start 2P', monospace;
+  border-radius: 0;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 0 #1a4400;
+  white-space: nowrap;
+  transition: filter 0.05s;
 }
 
 .btn-join:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+  filter: brightness(1.25);
 }
 
 .btn-join:active:not(:disabled) {
-  transform: translateY(0);
+  border-color: #2a6600 #88dd44 #88dd44 #2a6600;
+  box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.25), inset -1px -1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .btn-join:disabled {
@@ -367,12 +576,14 @@ html, body, #root {
 .lobby-controls {
   display: flex;
   justify-content: center;
-  gap: 20px;
-  font-size: 12px;
-  color: #64748b;
+  gap: 18px;
+  font-size: 7px;
+  color: #aaaaaa;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.8);
 }
 
 .lobby-controls b {
-  color: #94a3b8;
-  font-weight: 700;
+  color: #ffffff;
+  font-weight: 400;
 }

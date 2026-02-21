@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DevHacks CodeRed — Game Hub</title>
+    <meta name="description"
+        content="4 multiplayer browser games built for DevHacks CodeRed hackathon. Play online with friends!" />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap"
+        rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --red: #cc0000;
+            --red-dark: #8b0000;
+            --red-light: #ff2222;
+            --teal: #00b4a0;
+            --yellow: #ffd700;
+            --green-neon: #39ff14;
+            --orange: #ff6600;
+            --screen-bg: #0a0a1a;
+            --screen-glow: #1a1a3a;
+            --pixel-border: 4px;
+        }
+
+        html,
+        body {
+            width: 100%;
+            min-height: 100vh;
+            background: #1a0000;
+            font-family: 'Press Start 2P', monospace;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* Scanlines overlay */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9999;
+            background: repeating-linear-gradient(0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0, 0, 0, 0.08) 2px,
+                    rgba(0, 0, 0, 0.08) 4px);
+        }
+
+        /* Stars background */
+        .stars {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background: radial-gradient(ellipse at center, #0a0a2e 0%, #000005 100%);
+            overflow: hidden;
+        }
+
+        .stars::before,
+        .stars::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                radial-gradient(1px 1px at 10% 15%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 25% 35%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 40% 10%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 55% 50%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 70% 20%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 85% 40%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 15% 65%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 30% 80%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 45% 90%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 60% 70%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 75% 85%, #fff 100%, transparent),
+                radial-gradient(1px 1px at 90% 60%, #fff 100%, transparent),
+                radial-gradient(2px 2px at 5% 45%, rgba(255, 255, 100, 0.8) 100%, transparent),
+                radial-gradient(2px 2px at 95% 25%, rgba(100, 200, 255, 0.8) 100%, transparent),
+                radial-gradient(2px 2px at 50% 5%, rgba(255, 150, 255, 0.8) 100%, transparent);
+            animation: twinkle 3s ease-in-out infinite alternate;
+        }
+
+        .stars::after {
+            opacity: 0.5;
+            animation-delay: -1.5s;
+        }
+
+        @keyframes twinkle {
+            from {
+                opacity: 0.6;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Main arcade cabinet wrapper */
+        .arcade-cabinet {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 16px 40px;
+        }
+
+        /* TOP MARQUEE */
+        .marquee-top {
+            background: var(--teal);
+            border: 6px solid #004d44;
+            border-bottom: none;
+            padding: 12px 48px 14px;
+            border-radius: 12px 12px 0 0;
+            margin-bottom: 0;
+            position: relative;
+            box-shadow: 0 0 30px rgba(0, 180, 160, 0.5), inset 0 2px 8px rgba(255, 255, 255, 0.2);
+            width: min(680px, 96vw);
+        }
+
+        .marquee-top::before,
+        .marquee-top::after {
+            content: '★';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--yellow);
+            font-size: 24px;
+            text-shadow: 0 0 10px var(--yellow);
+        }
+
+        .marquee-top::before {
+            left: 14px;
+        }
+
+        .marquee-top::after {
+            right: 14px;
+        }
+
+        .marquee-title {
+            font-family: 'Press Start 2P', monospace;
+            font-size: clamp(20px, 5vw, 36px);
+            text-align: center;
+            color: var(--yellow);
+            text-shadow:
+                3px 3px 0 #8b4500,
+                6px 6px 0 rgba(0, 0, 0, 0.5),
+                0 0 20px rgba(255, 215, 0, 0.8);
+            letter-spacing: 4px;
+            -webkit-text-stroke: 1px #cc8800;
+        }
+
+        /* SCREEN BEZEL */
+        .screen-bezel {
+            background: var(--red);
+            border: 6px solid var(--red-dark);
+            border-top: none;
+            border-radius: 0 0 16px 16px;
+            padding: 20px;
+            width: min(680px, 96vw);
+            box-shadow:
+                inset 0 0 30px rgba(0, 0, 0, 0.5),
+                0 10px 40px rgba(0, 0, 0, 0.8);
+        }
+
+        /* CRT screen */
+        .screen {
+            background: var(--screen-bg);
+            border: 8px solid #111;
+            border-radius: 8px;
+            padding: 24px 20px;
+            position: relative;
+            box-shadow:
+                inset 0 0 60px rgba(0, 100, 255, 0.05),
+                inset 0 0 20px rgba(0, 0, 0, 0.8),
+                0 0 20px rgba(0, 0, 0, 0.9);
+            overflow: hidden;
+        }
+
+        .screen::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 30%, rgba(30, 30, 80, 0.4) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* Pixel grass decoration top/bottom */
+        .pixel-grass {
+            height: 16px;
+            background:
+                repeating-linear-gradient(90deg, #2d6a1e 0px, #2d6a1e 12px, #1a4d10 12px, #1a4d10 16px);
+            position: relative;
+            margin: 0 -20px;
+        }
+
+        .pixel-grass.top {
+            margin-bottom: 20px;
+        }
+
+        .pixel-grass.bottom {
+            margin-top: 20px;
+        }
+
+        /* HEADER inside screen */
+        .screen-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .hackathon-badge {
+            display: inline-block;
+            background: rgba(0, 180, 160, 0.15);
+            border: 2px solid var(--teal);
+            color: var(--teal);
+            font-size: 7px;
+            letter-spacing: 1px;
+            padding: 6px 12px;
+            margin-bottom: 14px;
+            animation: blink-border 2s step-start infinite;
+        }
+
+        @keyframes blink-border {
+
+            0%,
+            100% {
+                border-color: var(--teal);
+                box-shadow: 0 0 8px var(--teal);
+            }
+
+            50% {
+                border-color: rgba(0, 180, 160, 0.3);
+                box-shadow: none;
+            }
+        }
+
+        .screen-title {
+            font-size: clamp(14px, 3vw, 22px);
+            color: var(--green-neon);
+            text-shadow: 0 0 10px var(--green-neon), 0 0 20px rgba(57, 255, 20, 0.5);
+            letter-spacing: 3px;
+            margin-bottom: 6px;
+        }
+
+        .screen-subtitle {
+            font-family: 'VT323', monospace;
+            font-size: 18px;
+            color: rgba(200, 200, 200, 0.7);
+            letter-spacing: 1px;
+        }
+
+        /* INSERT COIN marquee */
+        .coin-marquee {
+            text-align: center;
+            margin: 4px 0 16px;
+            font-size: 9px;
+            color: var(--yellow);
+            text-shadow: 0 0 8px var(--yellow);
+            animation: pulse-text 1s step-start infinite;
+        }
+
+        @keyframes pulse-text {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0;
+            }
+        }
+
+        /* GAME GRID */
+        .game-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        @media (max-width: 480px) {
+            .game-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* GAME CARD — pixel art style */
+        .game-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 14px 14px 12px;
+            cursor: pointer;
+            text-decoration: none;
+            color: #fff;
+            transition: transform 0.1s;
+            /* Pixel border effect */
+            background: #0d0d2b;
+            border: 4px solid transparent;
+            image-rendering: pixelated;
+        }
+
+        /* Pixel-art inset border using box-shadow */
+        .game-card.survival {
+            border-color: #34d399;
+            box-shadow: 0 0 0 2px #0d0d2b, 0 0 0 4px #34d399, 0 0 20px rgba(52, 211, 153, 0.3);
+        }
+
+        .game-card.escape {
+            border-color: #818cf8;
+            box-shadow: 0 0 0 2px #0d0d2b, 0 0 0 4px #818cf8, 0 0 20px rgba(129, 140, 248, 0.3);
+        }
+
+        .game-card.darkroom {
+            border-color: #fbbf24;
+            box-shadow: 0 0 0 2px #0d0d2b, 0 0 0 4px #fbbf24, 0 0 20px rgba(251, 191, 36, 0.3);
+        }
+
+        .game-card.game4 {
+            border-color: #555;
+            box-shadow: 0 0 0 2px #0d0d2b, 0 0 0 4px #555;
+            opacity: 0.5;
+        }
+
+        .game-card:not(.disabled):hover {
+            transform: translateY(-4px) scale(1.02);
+        }
+
+        .game-card:not(.disabled):active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .game-card.disabled {
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-icon {
+            font-size: 22px;
+            line-height: 1;
+        }
+
+        .card-status {
+            font-size: 6px;
+            letter-spacing: 0.5px;
+            padding: 3px 6px;
+            border: 2px solid currentColor;
+        }
+
+        .game-card.survival .card-status {
+            color: #34d399;
+        }
+
+        .game-card.escape .card-status {
+            color: #818cf8;
+        }
+
+        .game-card.darkroom .card-status {
+            color: #fbbf24;
+        }
+
+        .game-card.game4 .card-status {
+            color: #555;
+        }
+
+        .status-live {
+            animation: blink-live 1.2s step-start infinite;
+        }
+
+        @keyframes blink-live {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .card-title {
+            font-size: clamp(8px, 1.8vw, 11px);
+            line-height: 1.5;
+            color: #fff;
+            text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.8);
+        }
+
+        .card-desc {
+            font-family: 'VT323', monospace;
+            font-size: 15px;
+            line-height: 1.4;
+            color: rgba(200, 200, 220, 0.8);
+            flex: 1;
+        }
+
+        .card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 8px;
+            border-top: 2px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .card-players {
+            font-family: 'VT323', monospace;
+            font-size: 14px;
+            color: rgba(180, 180, 200, 0.7);
+        }
+
+        .play-btn {
+            font-size: 7px;
+            padding: 4px 8px;
+            border: 2px solid currentColor;
+            background: transparent;
+            transition: background 0.1s, color 0.1s;
+        }
+
+        .game-card.survival .play-btn {
+            color: #34d399;
+        }
+
+        .game-card.escape .play-btn {
+            color: #818cf8;
+        }
+
+        .game-card.darkroom .play-btn {
+            color: #fbbf24;
+        }
+
+        .game-card:hover .play-btn {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Bottom control panel */
+        .control-panel {
+            background: var(--red-dark);
+            border: 6px solid #600;
+            border-top: none;
+            border-radius: 0 0 20px 20px;
+            padding: 14px 24px 18px;
+            width: min(680px, 96vw);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .joystick {
+            width: 36px;
+            height: 36px;
+            background: radial-gradient(circle at 35% 35%, #555, #111);
+            border-radius: 50%;
+            border: 3px solid #000;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), inset 0 1px 3px rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+        }
+
+        .buttons-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 3px solid rgba(0, 0, 0, 0.4);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5), inset 0 1px 3px rgba(255, 255, 255, 0.2);
+            flex-shrink: 0;
+        }
+
+        .btn-red {
+            background: radial-gradient(circle at 35% 35%, #ff5555, #cc0000);
+        }
+
+        .btn-green {
+            background: radial-gradient(circle at 35% 35%, #55ff55, #00aa00);
+        }
+
+        .btn-blue {
+            background: radial-gradient(circle at 35% 35%, #5555ff, #0000cc);
+        }
+
+        .btn-yellow {
+            background: radial-gradient(circle at 35% 35%, #ffff55, #ccaa00);
+        }
+
+        .footer-text {
+            text-align: center;
+            margin-top: 18px;
+            font-family: 'VT323', monospace;
+            font-size: 15px;
+            color: rgba(200, 180, 180, 0.6);
+        }
+
+        .footer-text a {
+            color: var(--teal);
+            text-decoration: none;
+        }
+
+        .footer-text a:hover {
+            text-decoration: underline;
+        }
+
+        /* Pixel corner decorations on screen */
+        .corner {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+        }
+
+        .corner-tl {
+            top: 8px;
+            left: 8px;
+            border-top: 3px solid rgba(255, 255, 255, 0.15);
+            border-left: 3px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .corner-tr {
+            top: 8px;
+            right: 8px;
+            border-top: 3px solid rgba(255, 255, 255, 0.15);
+            border-right: 3px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .corner-bl {
+            bottom: 8px;
+            left: 8px;
+            border-bottom: 3px solid rgba(255, 255, 255, 0.15);
+            border-left: 3px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .corner-br {
+            bottom: 8px;
+            right: 8px;
+            border-bottom: 3px solid rgba(255, 255, 255, 0.15);
+            border-right: 3px solid rgba(255, 255, 255, 0.15);
+        }
+
+        /* Scrolling credit ticker */
+        .ticker-wrap {
+            overflow: hidden;
+            width: 100%;
+            margin: 8px 0 0;
+            border-top: 2px solid rgba(255, 255, 255, 0.05);
+            padding-top: 8px;
+        }
+
+        .ticker {
+            display: inline-block;
+            white-space: nowrap;
+            font-family: 'VT323', monospace;
+            font-size: 14px;
+            color: rgba(150, 150, 180, 0.6);
+            animation: ticker-scroll 18s linear infinite;
+        }
+
+        @keyframes ticker-scroll {
+            from {
+                transform: translateX(100vw);
+            }
+
+            to {
+                transform: translateX(-100%);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="stars"></div>
+
+    <div class="arcade-cabinet">
+
+        <!-- Marquee Top -->
+        <div class="marquee-top">
+            <div class="marquee-title">GAME HUB</div>
+        </div>
+
+        <!-- Red bezel -->
+        <div class="screen-bezel">
+            <!-- CRT Screen -->
+            <div class="screen">
+                <div class="corner corner-tl"></div>
+                <div class="corner corner-tr"></div>
+                <div class="corner corner-bl"></div>
+                <div class="corner corner-br"></div>
+
+                <!-- Top grass -->
+                <div class="pixel-grass top"></div>
+
+                <!-- Screen Header -->
+                <div class="screen-header">
+                    <div class="hackathon-badge">✦ DEVHACKS CODERED 2026 ✦</div>
+                    <div class="screen-title">SELECT YOUR GAME</div>
+                    <div class="screen-subtitle">4 multiplayer games · no downloads · play now</div>
+                </div>
+
+                <div class="coin-marquee">► INSERT COIN TO PLAY ◄</div>
+
+                <!-- Games Grid -->
+                <div class="game-grid">
+
+                    <!-- Game 1: Survival Sandbox -->
+                    <a class="game-card survival" id="card-survival" onclick="openGame(5173)" href="#">
+                        <div class="card-header">
+                            <div class="card-icon">⛏️</div>
+                            <span class="card-status status-live">● LIVE</span>
+                        </div>
+                        <div class="card-title">SURVIVAL SANDBOX</div>
+                        <div class="card-desc">Gather resources, fight mobs, survive in a procedurally generated world.
+                        </div>
+                        <div class="card-footer">
+                            <span class="card-players">👥 ROOM-BASED</span>
+                            <span class="play-btn">PLAY ▶</span>
+                        </div>
+                    </a>
+
+                    <!-- Game 2: Escape Room -->
+                    <a class="game-card escape" id="card-escape" onclick="openGame(5175)" href="#">
+                        <div class="card-header">
+                            <div class="card-icon">🔐</div>
+                            <span class="card-status">SOON</span>
+                        </div>
+                        <div class="card-title">ESCAPE ROOM</div>
+                        <div class="card-desc">Solve puzzles, find clues, escape before time runs out. Teamwork is key.
+                        </div>
+                        <div class="card-footer">
+                            <span class="card-players">👥 CO-OP</span>
+                            <span class="play-btn">PLAY ▶</span>
+                        </div>
+                    </a>
+
+                    <!-- Game 3: Dark Room Survival -->
+                    <a class="game-card darkroom" id="card-darkroom" onclick="openGame(5176)" href="#">
+                        <div class="card-header">
+                            <div class="card-icon">🔦</div>
+                            <span class="card-status">SOON</span>
+                        </div>
+                        <div class="card-title">DARK ROOM SURVIVAL</div>
+                        <div class="card-desc">Navigate darkness, avoid monsters, find your way out. Inspired by Repo.
+                        </div>
+                        <div class="card-footer">
+                            <span class="card-players">👥 HORROR</span>
+                            <span class="play-btn">PLAY ▶</span>
+                        </div>
+                    </a>
+
+                    <!-- Game 4: TBD -->
+                    <div class="game-card game4 disabled">
+                        <div class="card-header">
+                            <div class="card-icon">🎮</div>
+                            <span class="card-status">PIPELINE</span>
+                        </div>
+                        <div class="card-title">COMING SOON</div>
+                        <div class="card-desc">A new multiplayer experience is in the works. Stay tuned.</div>
+                        <div class="card-footer">
+                            <span class="card-players">👥 MULTIPLAYER</span>
+                            <span class="play-btn">LOCKED</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Bottom grass -->
+                <div class="pixel-grass bottom"></div>
+
+                <!-- Scrolling ticker -->
+                <div class="ticker-wrap">
+                    <span class="ticker">
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        HIGH SCORE: 9999999 · PLAYER 1 READY · PLAYER 2 READY ·
+                        DEVHACKS CODERED 2026 · GOOD LUCK HAVE FUN · HIGH SCORE: 9999999 ·
+                        PLAYER 1 READY · DEVHACKS CODERED 2026 · GOOD LUCK HAVE FUN ·
+                    </span>
+                </div>
+
+            </div><!-- /screen -->
+        </div><!-- /bezel -->
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <div class="joystick"></div>
+            <div class="buttons-row">
+                <div class="btn-circle btn-green"></div>
+                <div class="btn-circle btn-red"></div>
+                <div class="btn-circle btn-blue"></div>
+                <div class="btn-circle btn-yellow"></div>
+            </div>
+            <div class="joystick"></div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer-text">
+            Built with ❤️ for <a href="https://github.com/Manav-Sonawane/DevHacks-CodeRed" target="_blank">DevHacks
+                CodeRed 2026</a>
+        </footer>
+
+    </div>
+
+    <script>
+        function openGame(port) {
+            const host = window.location.hostname || 'localhost';
+            window.open(`http://${host}:${port}`, '_blank');
+        }
+
+        // Prevent default anchor behavior for game cards using onclick
+        document.querySelectorAll('.game-card[onclick]').forEach(card => {
+            card.addEventListener('click', e => e.preventDefault());
+        });
+    </script>
+</body>
+
+</html>
