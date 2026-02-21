@@ -18,6 +18,13 @@ export default function useSocket() {
     const [roomName, setRoomName] = useState('');
     const [roomList, setRoomList] = useState([]);
 
+    // New features state
+    const [leaderboard, setLeaderboard] = useState([]);
+    const [ping, setPing] = useState(0);
+
+    // Track ping start time
+    const pingStartRef = useRef(0);
+
     useEffect(() => {
         const socket = io(SERVER_URL, {
             transports: ['websocket'],
@@ -26,10 +33,29 @@ export default function useSocket() {
 
         socket.on('connect', () => {
             setConnected(true);
+
+            // Auto-reconnect if we were in a game
+            const savedRoomId = roomId; // From React state wrapper
+            const savedPlayerName = localStorage.getItem('survival_nickname');
+            if (savedRoomId && savedPlayerName) {
+                socket.emit('joinRoom', { roomId: savedRoomId, playerName: savedPlayerName });
+            }
         });
 
         socket.on('disconnect', () => {
             setConnected(false);
+        });
+
+        // ── Ping/Pong ──
+        const pingInterval = setInterval(() => {
+            if (socket.connected) {
+                pingStartRef.current = Date.now();
+                socket.emit('ping');
+            }
+        }, 3000);
+
+        socket.on('pong', () => {
+            setPing(Date.now() - pingStartRef.current);
         });
 
         // ── Room Events ──
@@ -49,6 +75,7 @@ export default function useSocket() {
             setWorld([]);
             setPlayers({});
             setMobs({});
+            setLeaderboard([]);
         });
 
         // ── Game Events ──
@@ -66,6 +93,25 @@ export default function useSocket() {
             setPlayers(data.players);
             setMobs(data.mobs);
             setWorld(data.world);
+        });
+
+        socket.on('deltaUpdate', (data) => {
+            setPlayers(data.players);
+            setMobs(data.mobs);
+            if (data.tiles && data.tiles.length > 0) {
+                setWorld((prev) => {
+                    if (!prev || prev.length === 0) return prev;
+                    const copy = prev.map((row) => [...row]);
+                    for (const { x, y, tile } of data.tiles) {
+                        copy[y][x] = tile;
+                    }
+                    return copy;
+                });
+            }
+        });
+
+        socket.on('leaderboard', (board) => {
+            setLeaderboard(board);
         });
 
         socket.on('tileUpdate', ({ x, y, tile }) => {
@@ -90,6 +136,7 @@ export default function useSocket() {
         });
 
         return () => {
+            clearInterval(pingInterval);
             socket.disconnect();
         };
     }, []);
@@ -101,15 +148,15 @@ export default function useSocket() {
     }, []);
 
     // Room actions
-    const createRoom = useCallback((name) => {
+    const createRoom = useCallback((name, playerName) => {
         if (socketRef.current) {
-            socketRef.current.emit('createRoom', { name });
+            socketRef.current.emit('createRoom', { name, playerName });
         }
     }, []);
 
-    const joinRoom = useCallback((roomId) => {
+    const joinRoom = useCallback((roomId, playerName) => {
         if (socketRef.current) {
-            socketRef.current.emit('joinRoom', { roomId });
+            socketRef.current.emit('joinRoom', { roomId, playerName });
         }
     }, []);
 
@@ -132,6 +179,8 @@ export default function useSocket() {
         players,
         mobs,
         emit,
+        ping,
+        leaderboard,
         // Room state
         inGame,
         roomId,

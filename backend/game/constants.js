@@ -36,6 +36,14 @@ const MOB_DAMAGE = 10;
 const MOB_AGGRO_RANGE = 5;
 const MOB_TICK_MS = 1000;
 
+// ── Scoring ──
+const SCORE_PER_KILL = 50;
+const SCORE_PER_BLOCK_BREAK = 5;
+const SCORE_PER_SURVIVAL_TICK = 1;
+
+// ── Leaderboard ──
+const LEADERBOARD_BROADCAST_MS = 1000; // Update leaderboard every 1 second
+
 module.exports = {
   TILE,
   MAP_WIDTH,
@@ -54,4 +62,8 @@ module.exports = {
   MOB_DAMAGE,
   MOB_AGGRO_RANGE,
   MOB_TICK_MS,
+  SCORE_PER_KILL,
+  SCORE_PER_BLOCK_BREAK,
+  SCORE_PER_SURVIVAL_TICK,
+  LEADERBOARD_BROADCAST_MS,
 };

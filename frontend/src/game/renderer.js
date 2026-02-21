@@ -53,6 +53,17 @@ function drawTileIcon(ctx, type, x, y, size) {
     }
 }
 
+// ── Interpolation State ──
+const LERP_FACTOR = 0.2;
+const interpState = {
+    players: {},
+    mobs: {}
+};
+
+function lerp(start, end, factor) {
+    return start + (end - start) * factor;
+}
+
 /**
  * Render the full game scene on a canvas context.
  */
@@ -66,13 +77,43 @@ export function renderGame(ctx, canvas, world, players, mobs, myId) {
 
     if (!world || world.length === 0) return;
 
+    // ── Interpolate Entities ──
+    for (const [id, p] of Object.entries(players)) {
+        if (!interpState.players[id]) interpState.players[id] = { x: p.x, y: p.y };
+        // Snap if teleported (respawned far away)
+        if (Math.abs(interpState.players[id].x - p.x) > 2 || Math.abs(interpState.players[id].y - p.y) > 2) {
+            interpState.players[id].x = p.x;
+            interpState.players[id].y = p.y;
+        } else {
+            interpState.players[id].x = lerp(interpState.players[id].x, p.x, LERP_FACTOR);
+            interpState.players[id].y = lerp(interpState.players[id].y, p.y, LERP_FACTOR);
+        }
+    }
+    for (const id of Object.keys(interpState.players)) {
+        if (!players[id]) delete interpState.players[id];
+    }
+
+    for (const [id, m] of Object.entries(mobs)) {
+        if (!interpState.mobs[id]) interpState.mobs[id] = { x: m.x, y: m.y };
+        if (Math.abs(interpState.mobs[id].x - m.x) > 2 || Math.abs(interpState.mobs[id].y - m.y) > 2) {
+            interpState.mobs[id].x = m.x;
+            interpState.mobs[id].y = m.y;
+        } else {
+            interpState.mobs[id].x = lerp(interpState.mobs[id].x, m.x, LERP_FACTOR);
+            interpState.mobs[id].y = lerp(interpState.mobs[id].y, m.y, LERP_FACTOR);
+        }
+    }
+    for (const id of Object.keys(interpState.mobs)) {
+        if (!mobs[id]) delete interpState.mobs[id];
+    }
+
     // ── Camera: center on current player ──
-    const me = players[myId];
+    const meInterp = interpState.players[myId];
     let camX = 0;
     let camY = 0;
-    if (me) {
-        camX = me.x * TILE_SIZE - width / 2 + TILE_SIZE / 2;
-        camY = me.y * TILE_SIZE - height / 2 + TILE_SIZE / 2;
+    if (meInterp) {
+        camX = meInterp.x * TILE_SIZE - width / 2 + TILE_SIZE / 2;
+        camY = meInterp.y * TILE_SIZE - height / 2 + TILE_SIZE / 2;
     }
 
     // ── Calculate visible tile range ──
@@ -106,8 +147,9 @@ export function renderGame(ctx, canvas, world, players, mobs, myId) {
 
     // ── Draw Mobs ──
     for (const mob of Object.values(mobs)) {
-        const screenX = mob.x * TILE_SIZE - camX;
-        const screenY = mob.y * TILE_SIZE - camY;
+        const mInterp = interpState.mobs[mob.id] || mob;
+        const screenX = mInterp.x * TILE_SIZE - camX;
+        const screenY = mInterp.y * TILE_SIZE - camY;
 
         // Body
         ctx.fillStyle = '#e74c3c';
@@ -131,8 +173,9 @@ export function renderGame(ctx, canvas, world, players, mobs, myId) {
 
     // ── Draw Players ──
     for (const p of Object.values(players)) {
-        const screenX = p.x * TILE_SIZE - camX;
-        const screenY = p.y * TILE_SIZE - camY;
+        const pInterp = interpState.players[p.id] || p;
+        const screenX = pInterp.x * TILE_SIZE - camX;
+        const screenY = pInterp.y * TILE_SIZE - camY;
         const isMe = p.id === myId;
 
         // Player body (circle)
@@ -164,6 +207,15 @@ export function renderGame(ctx, canvas, world, players, mobs, myId) {
             ctx.fill();
         }
 
+        // Draw player name
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px monospace';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#000';
+        ctx.shadowBlur = 3;
+        ctx.fillText(p.name || 'Survivor', screenX + TILE_SIZE / 2, screenY - 12);
+        ctx.shadowBlur = 0; // reset
+
         // Health bar above player
         const healthPct = p.health / 100;
         ctx.fillStyle = '#333';
@@ -173,6 +225,7 @@ export function renderGame(ctx, canvas, world, players, mobs, myId) {
     }
 
     // ── Draw facing indicator for current player ──
+    const me = players[myId];
     if (me && me.facing) {
         const targetX = (me.x + me.facing.dx) * TILE_SIZE - camX;
         const targetY = (me.y + me.facing.dy) * TILE_SIZE - camY;

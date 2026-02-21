@@ -1,5 +1,6 @@
 const roomManager = require('../game/roomManager');
 const { TILE, PLAYER_ATTACK_DAMAGE } = require('../game/constants');
+const PlayerStats = require('../models/PlayerStats');
 
 /**
  * Broadcast state to all players in a room.
@@ -7,6 +8,14 @@ const { TILE, PLAYER_ATTACK_DAMAGE } = require('../game/constants');
 function broadcastRoomState(io, room) {
     if (!room) return;
     io.to(room.id).emit('stateUpdate', room.getState());
+}
+
+/**
+ * Broadcast only delta updates (changed tiles + active players/mobs)
+ */
+function broadcastRoomDelta(io, room) {
+    if (!room) return;
+    io.to(room.id).emit('deltaUpdate', room.getDelta());
 }
 
 /**
@@ -24,7 +33,7 @@ function setupSocketHandlers(io) {
         socket.emit('roomList', roomManager.listRooms());
 
         // ── Create Room ──
-        socket.on('createRoom', ({ name }) => {
+        socket.on('createRoom', ({ name, playerName }) => {
             // Leave current room if any
             _leaveCurrentRoom(io, socket);
 
@@ -38,9 +47,9 @@ function setupSocketHandlers(io) {
             socket.join(room.id);
 
             // Add player to room (createRoom creates the Room but doesn't add the host as a player)
-            const result = roomManager.joinRoom(room.id, socket.id);
+            const result = roomManager.joinRoom(room.id, socket.id, playerName);
 
-            console.log(`Room "${roomName}" (${room.id}) created by ${socket.id}`);
+            console.log(`Room "${roomName}" (${room.id}) created by ${socket.id} (as ${playerName})`);
 
             // Send init to the creator
             socket.emit('roomCreated', { roomId: room.id, roomName: room.name });
@@ -55,7 +64,7 @@ function setupSocketHandlers(io) {
         });
 
         // ── Join Room ──
-        socket.on('joinRoom', ({ roomId }) => {
+        socket.on('joinRoom', ({ roomId, playerName }) => {
             // Leave current room if any
             _leaveCurrentRoom(io, socket);
 
@@ -69,7 +78,7 @@ function setupSocketHandlers(io) {
             socket.join(room.id);
 
             // Add player to room
-            const result = roomManager.joinRoom(room.id, socket.id);
+            const result = roomManager.joinRoom(room.id, socket.id, playerName);
             if (!result) {
                 socket.emit('error', { message: 'Failed to join room' });
                 return;
@@ -78,7 +87,7 @@ function setupSocketHandlers(io) {
             // Wire callbacks if not already
             _wireRoomCallbacks(io, room);
 
-            console.log(`Player ${socket.id} joined room "${room.name}" (${room.id})`);
+            console.log(`Player ${socket.id} (${playerName}) joined room "${room.name}" (${room.id})`);
 
             // Send init to the joining player
             socket.emit('init', {
@@ -95,6 +104,11 @@ function setupSocketHandlers(io) {
         // ── List Rooms ──
         socket.on('listRooms', () => {
             socket.emit('roomList', roomManager.listRooms());
+        });
+
+        // ── Ping/Pong (Latency) ──
+        socket.on('ping', () => {
+            socket.emit('pong');
         });
 
         // ── Leave Room ──
@@ -117,7 +131,7 @@ function setupSocketHandlers(io) {
                     room.eatFood(socket.id);
                     room.damageTile(p.x, p.y, 999);
                 }
-                broadcastRoomState(io, room);
+                broadcastRoomDelta(io, room);
             }
         });
 
@@ -129,10 +143,10 @@ function setupSocketHandlers(io) {
             const facing = room.getFacingTile(socket.id);
             if (!facing) return;
 
-            const result = room.damageTile(facing.x, facing.y, 1);
+            const result = room.damageTile(facing.x, facing.y, 1, socket.id);
             if (result) {
-                io.to(room.id).emit('tileUpdate', { x: facing.x, y: facing.y, tile: result });
-                broadcastRoomState(io, room);
+                // Not dispatching a single tileUpdate event anymore because broadcastRoomDelta handles it efficiently
+                broadcastRoomDelta(io, room);
             }
         });
 
@@ -146,11 +160,11 @@ function setupSocketHandlers(io) {
 
             const targetMob = room.getMobAt(facing.x, facing.y);
             if (targetMob) {
-                const died = room.damageMob(targetMob.id, PLAYER_ATTACK_DAMAGE);
+                const died = room.damageMob(targetMob.id, PLAYER_ATTACK_DAMAGE, socket.id);
                 if (died) {
                     console.log(`Mob ${targetMob.id} killed by ${socket.id} in room ${room.id}`);
                 }
-                broadcastRoomState(io, room);
+                broadcastRoomDelta(io, room);
             }
         });
 
@@ -188,7 +202,36 @@ function _leaveCurrentRoom(io, socket) {
  */
 function _wireRoomCallbacks(io, room) {
     room.onStateChange = (r) => {
-        broadcastRoomState(io, r);
+        broadcastRoomDelta(io, r);
+    };
+
+    room.onLeaderboardUpdate = (r, leaderboard) => {
+        io.to(r.id).emit('leaderboard', leaderboard);
+    };
+
+    room.onSavePlayerStats = async (p) => {
+        try {
+            // For hackathon: socket.id acts as a generated device/player ID from the frontend
+            const survivalSecs = Math.floor((Date.now() - p.joinedAt) / 1000);
+            await PlayerStats.findOneAndUpdate(
+                { playerId: p.id },
+                {
+                    $set: { nickname: p.name },
+                    $inc: {
+                        totalScore: p.score,
+                        totalKills: p.kills,
+                        totalDeaths: p.deaths,
+                        blocksBroken: p.blocksBroken,
+                        gamesPlayed: 1
+                    },
+                    $max: { bestSurvivalTimeSeconds: survivalSecs },
+                    $currentDate: { lastPlayedAt: true }
+                },
+                { upsert: true } // Create if doesn't exist
+            );
+        } catch (err) {
+            console.error('Failed to save player stats to MongoDB:', err);
+        }
     };
 
     room.onPlayerDied = (r, playerId) => {

@@ -1,6 +1,7 @@
 const { TILE, MAP_WIDTH, MAP_HEIGHT, TILE_HEALTH, SOLID_TILES } = require('./constants');
-const { MOB_HEALTH, MOB_DAMAGE, MOB_AGGRO_RANGE, MOB_COUNT } = require('./constants');
-const { MAX_HEALTH, MAX_HUNGER, HUNGER_LOSS_PER_TICK, STARVATION_DAMAGE, FOOD_HUNGER_RESTORE, HUNGER_TICK_MS, MOB_TICK_MS } = require('./constants');
+const { MOB_HEALTH, MOB_DAMAGE, MOB_AGGRO_RANGE, MOB_COUNT, MOB_TICK_MS } = require('./constants');
+const { MAX_HEALTH, MAX_HUNGER, HUNGER_LOSS_PER_TICK, STARVATION_DAMAGE, FOOD_HUNGER_RESTORE, HUNGER_TICK_MS } = require('./constants');
+const { SCORE_PER_KILL, SCORE_PER_BLOCK_BREAK, SCORE_PER_SURVIVAL_TICK, LEADERBOARD_BROADCAST_MS } = require('./constants');
 
 let nextRoomId = 1;
 
@@ -11,8 +12,8 @@ class Room {
         this.hostId = hostId;
         this.createdAt = Date.now();
 
-        // Per-room game state
         this.world = [];
+        this.dirtyTiles = [];
         this.players = {};
         this.mobs = {};
         this.nextMobId = 1;
@@ -24,10 +25,13 @@ class Room {
         // Start tick intervals
         this.hungerInterval = setInterval(() => this._tickHunger(), HUNGER_TICK_MS);
         this.mobInterval = setInterval(() => this._tickMobs(), MOB_TICK_MS);
+        this.leaderboardInterval = setInterval(() => this._tickLeaderboard(), LEADERBOARD_BROADCAST_MS);
 
         // Broadcast callback (set by handler)
         this.onStateChange = null;
         this.onPlayerDied = null;
+        this.onLeaderboardUpdate = null;
+        this.onSavePlayerStats = null;
     }
 
     // ══════════════════════════════════════
@@ -72,7 +76,7 @@ class Room {
         return x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT;
     }
 
-    damageTile(x, y, amount = 1) {
+    damageTile(x, y, amount = 1, playerId = null) {
         if (!this.isInBounds(x, y)) return null;
         const tile = this.world[y][x];
         if (tile.type === TILE.GRASS) return null;
@@ -81,9 +85,19 @@ class Room {
         if (tile.health <= 0) {
             tile.type = TILE.GRASS;
             tile.health = 0;
+
+            // Reward player for breaking a block (tree/stone)
+            if (playerId && this.players[playerId]) {
+                this.players[playerId].score += SCORE_PER_BLOCK_BREAK;
+                this.players[playerId].blocksBroken += 1;
+            }
         }
+
+        this.dirtyTiles.push({ x, y, tile });
         return tile;
     }
+
+
 
     findRandomGrassTile() {
         let attempts = 0;
@@ -105,21 +119,32 @@ class Room {
     //  PLAYERS
     // ══════════════════════════════════════
 
-    addPlayer(socketId) {
+    addPlayer(socketId, name) {
         const spawn = this.findRandomGrassTile();
         const player = {
             id: socketId,
+            name: name || 'Survivor',
             x: spawn.x,
             y: spawn.y,
             health: MAX_HEALTH,
             hunger: MAX_HUNGER,
             facing: { dx: 0, dy: -1 },
+            // Scoring
+            score: 0,
+            kills: 0,
+            deaths: 0,
+            blocksBroken: 0,
+            joinedAt: Date.now()
         };
         this.players[socketId] = player;
         return player;
     }
 
     removePlayer(socketId) {
+        const p = this.players[socketId];
+        if (p && this.onSavePlayerStats) {
+            this.onSavePlayerStats(p); // Save stats before removing
+        }
         delete this.players[socketId];
         return Object.keys(this.players).length === 0;
     }
@@ -179,6 +204,12 @@ class Room {
     _tickHunger() {
         for (const id of Object.keys(this.players)) {
             const p = this.players[id];
+
+            // Add survival score for staying alive
+            if (p.health > 0) {
+                p.score += SCORE_PER_SURVIVAL_TICK;
+            }
+
             p.hunger = Math.max(0, p.hunger - HUNGER_LOSS_PER_TICK);
             if (p.hunger <= 0) {
                 p.health = Math.max(0, p.health - STARVATION_DAMAGE);
@@ -215,12 +246,18 @@ class Room {
         return null;
     }
 
-    damageMob(id, amount) {
+    damageMob(id, amount, playerId = null) {
         const mob = this.mobs[id];
         if (!mob) return false;
         mob.health = Math.max(0, mob.health - amount);
         if (mob.health <= 0) {
             delete this.mobs[id];
+
+            // Reward player for kill
+            if (playerId && this.players[playerId]) {
+                this.players[playerId].score += SCORE_PER_KILL;
+                this.players[playerId].kills += 1;
+            }
             return true;
         }
         return false;
@@ -288,24 +325,59 @@ class Room {
         // Apply mob attacks
         for (const atk of attacks) {
             const died = this.damagePlayer(atk.playerId, atk.damage);
-            if (died && this.onPlayerDied) {
-                this.onPlayerDied(this, atk.playerId);
+            if (died) {
+                const p = this.players[atk.playerId];
+                if (p) {
+                    p.deaths += 1;
+                    if (this.onSavePlayerStats) {
+                        this.onSavePlayerStats(p); // Save stats on death
+                    }
+                    p.score = Math.floor(p.score / 2); // Penalty for dying
+                    p.joinedAt = Date.now(); // Reset survival timer
+                }
+
+                if (this.onPlayerDied) {
+                    this.onPlayerDied(this, atk.playerId);
+                }
             }
         }
 
         if (this.onStateChange) this.onStateChange(this);
     }
 
+    _tickLeaderboard() {
+        if (!this.onLeaderboardUpdate || Object.keys(this.players).length === 0) return;
+
+        const leaderboard = Object.values(this.players).map(p => ({
+            id: p.id,
+            name: p.name,
+            score: p.score,
+            kills: p.kills,
+            deaths: p.deaths,
+            survivalTimeSec: Math.floor((Date.now() - p.joinedAt) / 1000)
+        })).sort((a, b) => b.score - a.score);
+
+        this.onLeaderboardUpdate(this, leaderboard);
+    }
+
     // ══════════════════════════════════════
     //  STATE & LIFECYCLE
-    // ══════════════════════════════════════
-
     getState() {
         return {
             world: this.world,
             players: this.players,
             mobs: this.mobs,
         };
+    }
+
+    getDelta() {
+        const delta = {
+            tiles: this.dirtyTiles,
+            players: this.players,
+            mobs: this.mobs,
+        };
+        this.dirtyTiles = []; // Clear after building delta
+        return delta;
     }
 
     getInfo() {
@@ -318,8 +390,16 @@ class Room {
     }
 
     destroy() {
+        // Save stats for remaining players before destroy
+        for (const p of Object.values(this.players)) {
+            if (this.onSavePlayerStats) {
+                this.onSavePlayerStats(p);
+            }
+        }
+
         clearInterval(this.hungerInterval);
         clearInterval(this.mobInterval);
+        clearInterval(this.leaderboardInterval);
         this.players = {};
         this.mobs = {};
         this.world = [];

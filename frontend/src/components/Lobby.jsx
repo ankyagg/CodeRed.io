@@ -13,12 +13,25 @@ function GroundStrip() {
 
 export default function Lobby({ connected, roomList, createRoom, joinRoom, refreshRooms }) {
     const [newRoomName, setNewRoomName] = useState('');
+    const [playerName, setPlayerName] = useState(() => localStorage.getItem('survival_nickname') || '');
 
     const handleCreate = (e) => {
         e.preventDefault();
-        if (newRoomName.trim()) {
-            createRoom(newRoomName.trim());
+        if (newRoomName.trim() && playerName.trim()) {
+            localStorage.setItem('survival_nickname', playerName.trim());
+            createRoom(newRoomName.trim(), playerName.trim());
             setNewRoomName('');
+        } else if (!playerName.trim()) {
+            alert('Please enter a nickname to play!');
+        }
+    };
+
+    const handleJoin = (roomId) => {
+        if (playerName.trim()) {
+            localStorage.setItem('survival_nickname', playerName.trim());
+            joinRoom(roomId, playerName.trim());
+        } else {
+            alert('Please enter a nickname to play!');
         }
     };
 
@@ -55,7 +68,21 @@ export default function Lobby({ connected, roomList, createRoom, joinRoom, refre
 
                 {/* Create Room Card */}
                 <div className="lobby-card">
-                    <h2 className="card-title">[ CREATE ROOM ]</h2>
+                    <h2 className="card-title">[ JOIN OR CREATE ]</h2>
+                    <div className="mb-4">
+                        <label className="block text-xs font-bold text-gray-400 mb-1 tracking-widest">NICKNAME</label>
+                        <input
+                            type="text"
+                            value={playerName}
+                            onChange={(e) => setPlayerName(e.target.value)}
+                            placeholder="Enter your name..."
+                            className="room-input mb-4"
+                            maxLength={16}
+                            autoFocus
+                        />
+                    </div>
+
+                    <h3 className="block text-xs font-bold text-gray-400 mb-1 tracking-widest">NEW WORLD</h3>
                     <form onSubmit={handleCreate} className="create-form">
                         <input
                             type="text"
@@ -69,7 +96,7 @@ export default function Lobby({ connected, roomList, createRoom, joinRoom, refre
                         <button
                             type="submit"
                             className="btn-create"
-                            disabled={!newRoomName.trim() || !connected}
+                            disabled={!newRoomName.trim() || !playerName.trim() || !connected}
                         >
                             CREATE
                         </button>
@@ -102,7 +129,7 @@ export default function Lobby({ connected, roomList, createRoom, joinRoom, refre
                                         </span>
                                     </div>
                                     <button
-                                        onClick={() => joinRoom(room.id)}
+                                        onClick={() => handleJoin(room.id)}
                                         className="btn-join"
                                         disabled={!connected}
                                     >
