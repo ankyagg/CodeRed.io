@@ -261,13 +261,13 @@ const server = createServer((req, res) => {
         res.end(JSON.stringify({
             lanIp: LAN_IP,
             port: PORT,
-            gameUrl: `http://${LAN_IP}:5176`,
-            wsUrl: `ws://${LAN_IP}:${PORT}`,
-            allLinks: LAN_IPS.map(({ iface, ip }) => ({
-                iface,
-                gameUrl: `http://${ip}:5176`,
-                wsUrl: `ws://${ip}:${PORT}`,
-            })),
+            gameUrl: `http://10.0.0.165:5176/hoop/`,
+            wsUrl: `ws://10.0.0.165:${PORT}`,
+            allLinks: [{
+                iface: 'Wi-Fi',
+                gameUrl: `http://10.0.0.165:5176/hoop/`,
+                wsUrl: `ws://10.0.0.165:${PORT}`,
+            }],
         }));
         return;
     }

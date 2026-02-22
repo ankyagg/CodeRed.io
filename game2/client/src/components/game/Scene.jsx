@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { Box, Cylinder, Sphere, Text, useGLTF, useAnimations } from '@react-three/drei';
+import { Box, Cylinder, Sphere, Text, useGLTF, useAnimations, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import useStore from '../../store/useStore';
 
@@ -9,6 +9,10 @@ function RemotePlayerModel({ position, rotation, username }) {
     const { scene, animations } = useGLTF('/escape/models/Walking.glb');
     const { actions } = useAnimations(animations, group);
     const targetPos = useRef(new THREE.Vector3(...position));
+
+    const chatBubbles = useStore(state => state.chatBubbles);
+    const bubble = chatBubbles[username];
+    const showBubble = bubble && (Date.now() - bubble.timestamp < 6000);
 
     useEffect(() => {
         targetPos.current.set(...position);
@@ -55,7 +59,6 @@ function RemotePlayerModel({ position, rotation, username }) {
             */}
             <primitive object={scene} scale={1} position={[0, -1.9, 0]} rotation={[0, Math.PI, 0]} />
 
-            {/* Floating Username */}
             <Text
                 position={[0, 0.4, 0]}
                 fontSize={0.2}
@@ -67,6 +70,15 @@ function RemotePlayerModel({ position, rotation, username }) {
             >
                 {username || "Player"}
             </Text>
+
+            {/* Chat Bubble overlay using Html */}
+            {showBubble && (
+                <Html position={[0, 1.2, 0]} center sprite zIndexRange={[100, 0]}>
+                    <div className="bg-[#110d0a]/90 text-[#e8dcb8] border border-[#d4af37]/50 px-3 py-2 rounded-br-2xl rounded-tl-2xl shadow-[0_0_15px_rgba(212,175,55,0.4)] pointer-events-none text-sm max-w-[200px] text-center font-sans break-words whitespace-normal transition-opacity animate-in fade-in zoom-in duration-300">
+                        {bubble.text}
+                    </div>
+                </Html>
+            )}
         </group>
     );
 }

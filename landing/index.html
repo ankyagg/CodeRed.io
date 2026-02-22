@@ -4,11 +4,12 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DevHacks CodeRed — Game Hub</title>
+    <title>CodeRed.io</title>
     <meta name="description"
         content="4 multiplayer browser games built for DevHacks CodeRed hackathon. Play online with friends!" />
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap"
         rel="stylesheet" />
+    <link rel="icon" type="image/png" href="./logo3.png" />
     <style>
         *,
         *::before,
@@ -147,6 +148,10 @@
         }
 
         .marquee-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
             font-family: 'Press Start 2P', monospace;
             font-size: clamp(20px, 5vw, 36px);
             text-align: center;
@@ -157,6 +162,12 @@
                 0 0 20px rgba(255, 215, 0, 0.8);
             letter-spacing: 4px;
             -webkit-text-stroke: 1px #cc8800;
+        }
+
+        .marquee-logo {
+            height: clamp(32px, 8vw, 50px);
+            image-rendering: pixelated;
+            filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.5));
         }
 
         /* SCREEN BEZEL */
@@ -573,7 +584,7 @@
             font-family: 'VT323', monospace;
             font-size: 14px;
             color: rgba(150, 150, 180, 0.6);
-            animation: ticker-scroll 18s linear infinite;
+            animation: ticker-scroll 30s linear infinite;
         }
 
         @keyframes ticker-scroll {
@@ -595,7 +606,7 @@
 
         <!-- Marquee Top -->
         <div class="marquee-top">
-            <div class="marquee-title">GAME HUB</div>
+            <div class="marquee-title">CodeRed.io</div>
         </div>
 
         <!-- Red bezel -->
@@ -641,7 +652,7 @@
                     <a class="game-card escape" id="card-escape" href="/escape/" target="_blank">
                         <div class="card-header">
                             <div class="card-icon">🔐</div>
-                            <span class="card-status">SOON</span>
+                            <span class="card-status status-live">● LIVE</span>
                         </div>
                         <div class="card-title">ESCAPE ROOM</div>
                         <div class="card-desc">Solve puzzles, find clues, escape before time runs out. Teamwork is key.
@@ -656,7 +667,7 @@
                     <a class="game-card darkroom" id="card-darkroom" href="/darkroom/" target="_blank">
                         <div class="card-header">
                             <div class="card-icon">🔦</div>
-                            <span class="card-status">SOON</span>
+                            <span class="card-status status-live">● LIVE</span>
                         </div>
                         <div class="card-title">DARK ROOM SURVIVAL</div>
                         <div class="card-desc">Navigate darkness, avoid monsters, find your way out. Inspired by Repo.
@@ -691,9 +702,9 @@
                 <div class="ticker-wrap">
                     <span class="ticker">
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                        HIGH SCORE: 9999999 · PLAYER 1 READY · PLAYER 2 READY ·
-                        DEVHACKS CODERED 2026 · GOOD LUCK HAVE FUN · HIGH SCORE: 9999999 ·
-                        PLAYER 1 READY · DEVHACKS CODERED 2026 · GOOD LUCK HAVE FUN ·
+                        CREATORS: MANAV SONAWANE, ANIKET WALANJ, VANSHITA VARMA AND ARYAN SALUNKE ·
+                        CREATORS: MANAV SONAWANE, ANIKET WALANJ, VANSHITA VARMA AND ARYAN SALUNKE ·
+                        CREATORS: MANAV SONAWANE, ANIKET WALANJ, VANSHITA VARMA AND ARYAN SALUNKE ·
                     </span>
                 </div>
 

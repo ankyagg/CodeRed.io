@@ -44,7 +44,7 @@ export default function Leaderboard({ leaderboard, myId, isOpen }) {
                                         {isMe && <span className="text-[10px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded uppercase tracking-wider">You</span>}
                                     </div>
                                     <div className="w-20 text-right font-mono text-emerald-400 font-bold">
-                                        {player.score.toLocaleString()}
+                                        {Math.max(0, player.score - 1000).toLocaleString()}
                                     </div>
                                     <div className="w-16 text-right font-mono text-gray-400">
                                         <span className="text-orange-400">{player.kills}</span>/<span className="text-red-400">{player.deaths}</span>

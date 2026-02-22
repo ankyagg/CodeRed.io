@@ -83,7 +83,7 @@ export default function App() {
                     <div className="bg-gray-900 border-4 border-yellow-500 p-8 rounded text-center">
                         <p className="text-gray-300 font-mono mb-2 text-xl tracking-widest">WINNER:</p>
                         <p className="text-white font-bold text-4xl mb-4">{matchWinner.winnerName}</p>
-                        <p className="text-emerald-400 font-mono text-2xl">Score: {matchWinner.score}</p>
+                        <p className="text-emerald-400 font-mono text-2xl">Score: {Math.max(0, matchWinner.score - 1000)}</p>
                     </div>
                     <p className="text-gray-500 font-mono mt-8 animate-pulse text-xs tracking-widest">Returning to lobby in 5 seconds...</p>
                 </div>

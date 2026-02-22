@@ -50,7 +50,7 @@ export default function HUD({ players, myId, connected, roomName, onLeave, ping 
                         {/* Score Badge */}
                         <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-md px-4 py-1.5 rounded-full border border-yellow-500/30 shadow-[0_0_15px_rgba(234,179,8,0.2)]">
                             <span className="text-xs font-bold text-gray-400 mr-2 uppercase tracking-wide">Score</span>
-                            <span className="font-mono font-bold text-yellow-400 text-sm">{me.score?.toLocaleString() || 0}</span>
+                            <span className="font-mono font-bold text-yellow-400 text-sm">{Math.max(0, (me.score || 1000) - 1000).toLocaleString()}</span>
                         </div>
 
                         {/* Health */}

@@ -13,6 +13,7 @@ const useStore = create((set) => ({
     booksAligned: { book1: false, book2: false, book3: false },
     lampOff: false,
     modalPrompt: null,
+    chatBubbles: {},
 
     // Setters
     setUser: (user) => set({ user }),
@@ -21,6 +22,9 @@ const useStore = create((set) => ({
     setGameState: (stateUpdate) => set((state) => ({ ...state, ...stateUpdate })),
     addToInventory: (itemId) => set((state) => ({ inventory: [...state.inventory, itemId] })),
     removeFromInventory: (itemId) => set((state) => ({ inventory: state.inventory.filter(id => id !== itemId) })),
+    setChatBubble: (username, text) => set((state) => ({
+        chatBubbles: { ...state.chatBubbles, [username]: { text, timestamp: Date.now() } }
+    })),
 }));
 
 export default useStore;
