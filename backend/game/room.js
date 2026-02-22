@@ -1,7 +1,7 @@
 const { TILE, MAP_WIDTH, MAP_HEIGHT, TILE_HEALTH, SOLID_TILES } = require('./constants');
 const { MOB_TYPES, MOB_AGGRO_RANGE, MOB_COUNT, MOB_TICK_MS } = require('./constants');
-const { MAX_HEALTH, MAX_HUNGER, HUNGER_LOSS_PER_TICK, STARVATION_DAMAGE, FOOD_HUNGER_RESTORE, HUNGER_TICK_MS } = require('./constants');
-const { SCORE_PER_KILL, SCORE_PER_BLOCK_BREAK, SCORE_PER_SURVIVAL_TICK, LEADERBOARD_BROADCAST_MS, MAX_SCORE } = require('./constants');
+const { MAX_HEALTH, MAX_HUNGER, HUNGER_LOSS_PER_TICK, STARVATION_DAMAGE, FOOD_HUNGER_RESTORE, MEDKIT_HEALTH_RESTORE, HUNGER_TICK_MS } = require('./constants');
+const { SCORE_PER_KILL, SCORE_PER_BLOCK_BREAK, SCORE_PER_SURVIVAL_TICK, SCORE_PER_FOOD, LEADERBOARD_BROADCAST_MS, MAX_SCORE } = require('./constants');
 
 let nextRoomId = 1;
 
@@ -26,6 +26,7 @@ class Room {
         this.hungerInterval = setInterval(() => this._tickHunger(), HUNGER_TICK_MS);
         this.mobInterval = setInterval(() => this._tickMobs(), MOB_TICK_MS);
         this.leaderboardInterval = setInterval(() => this._tickLeaderboard(), LEADERBOARD_BROADCAST_MS);
+        this.medkitInterval = setInterval(() => this._spawnMedkits(1), 60000); // 1 every minute
 
         // Broadcast callback (set by handler)
         this.onStateChange = null;
@@ -62,10 +63,10 @@ class Room {
                 const rand = Math.random();
                 let type;
                 if (rand < 0.65) type = TILE.GRASS;
-                else if (rand < 0.80) type = TILE.TREE;
-                else if (rand < 0.90) type = TILE.STONE;
-                else if (rand < 0.97) type = TILE.FOOD;
-                else if (rand < 0.99) type = TILE.GOLD;
+                else if (rand < 0.82) type = TILE.TREE;
+                else if (rand < 0.92) type = TILE.STONE;
+                else if (rand < 0.98) type = TILE.FOOD;
+                else if (rand < 0.995) type = TILE.GOLD;
                 else type = TILE.DIAMOND;
 
                 const health = TILE_HEALTH[type] || 0;
@@ -73,6 +74,28 @@ class Room {
             }
             this.world.push(row);
         }
+
+        // Spawn extra mob guardians around diamonds
+        this._spawnDiamondGuardians();
+
+        // Spawn initial medkits (2 to 3)
+        const medkitCount = Math.floor(Math.random() * 2) + 2;
+        this._spawnMedkits(medkitCount);
+    }
+
+    _spawnMedkits(count) {
+        for (let i = 0; i < count; i++) {
+            const spawnRow = Math.floor(Math.random() * (MAP_HEIGHT - 2)) + 1;
+            const spawnCol = Math.floor(Math.random() * (MAP_WIDTH - 2)) + 1;
+
+            // Only overwrite if it's grass to not destroy walls or players
+            if (this.world[spawnRow][spawnCol].type === TILE.GRASS) {
+                this.world[spawnRow][spawnCol].type = TILE.MEDKIT;
+                this.world[spawnRow][spawnCol].health = TILE_HEALTH[TILE.MEDKIT];
+                this.dirtyTiles.push({ x: spawnCol, y: spawnRow, tile: this.world[spawnRow][spawnCol] });
+            }
+        }
+        if (this.onStateChange) this.onStateChange(this); // Broadcast updates
     }
 
     getTile(x, y) {
@@ -139,11 +162,12 @@ class Room {
     //  PLAYERS
     // ══════════════════════════════════════
 
-    addPlayer(socketId, name) {
+    addPlayer(socketId, name, avatar) {
         const spawn = this.findRandomGrassTile();
         const player = {
             id: socketId,
             name: name || 'Survivor',
+            avatar: avatar || 'steve',
             x: spawn.x,
             y: spawn.y,
             health: MAX_HEALTH,
@@ -202,6 +226,17 @@ class Room {
         const player = this.players[id];
         if (!player) return false;
         player.hunger = Math.min(MAX_HUNGER, player.hunger + FOOD_HUNGER_RESTORE);
+        player.score += SCORE_PER_FOOD;
+        this.checkWinCondition(player);
+        return true;
+    }
+
+    useMedkit(id) {
+        const player = this.players[id];
+        if (!player) return false;
+        player.health = Math.min(MAX_HEALTH, player.health + MEDKIT_HEALTH_RESTORE);
+        player.score += SCORE_PER_FOOD * 2; // Extra points for big item
+        this.checkWinCondition(player);
         return true;
     }
 
@@ -258,6 +293,38 @@ class Room {
                 y: spawn.y,
                 health: typeData.health,
             };
+        }
+    }
+
+    _spawnDiamondGuardians() {
+        const types = Object.keys(MOB_TYPES);
+        for (let y = 0; y < MAP_HEIGHT; y++) {
+            for (let x = 0; x < MAP_WIDTH; x++) {
+                if (this.world[y][x].type === TILE.DIAMOND) {
+                    // Try to spawn 2 mobs near each diamond
+                    for (let i = 0; i < 2; i++) {
+                        const offsets = [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, 1], [1, -1], [-1, 1]];
+                        for (const [dx, dy] of offsets.sort(() => Math.random() - 0.5)) {
+                            const nx = x + dx;
+                            const ny = y + dy;
+                            if (this.isInBounds(nx, ny) && this.world[ny][nx].type === TILE.GRASS) {
+                                const id = `mob_guardian_${this.nextMobId++}`;
+                                const typeKey = Math.random() > 0.3 ? 'BRUTE' : 'NORMAL'; // Diamonds get tougher guards
+                                const typeData = MOB_TYPES[typeKey];
+
+                                this.mobs[id] = {
+                                    id,
+                                    type: typeKey,
+                                    x: nx,
+                                    y: ny,
+                                    health: typeData.health,
+                                };
+                                break; // Only spawn one per attempt
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -429,6 +496,7 @@ class Room {
         clearInterval(this.hungerInterval);
         clearInterval(this.mobInterval);
         clearInterval(this.leaderboardInterval);
+        clearInterval(this.medkitInterval);
         this.players = {};
         this.mobs = {};
         this.world = [];

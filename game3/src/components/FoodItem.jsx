@@ -6,7 +6,7 @@ const MODEL_PATH = './models/rice.glb';
 /**
  * FoodItem — Renders the rice GLB model at the given position.
  */
-export function FoodItem({ food }) {
+export const FoodItem = React.memo(({ food }) => {
     const { scene } = useGLTF(MODEL_PATH);
 
     const clonedScene = useMemo(() => {
@@ -32,6 +32,6 @@ export function FoodItem({ food }) {
             <primitive object={clonedScene} />
         </group>
     );
-}
+});
 
 useGLTF.preload(MODEL_PATH);

@@ -7,7 +7,8 @@ const TILE_COLORS = {
     stone: '#6b6b6b',
     food: '#e8a838',
     gold: '#c9961a',
-    diamond: '#1a9ea8'
+    diamond: '#1a9ea8',
+    medkit: '#f1f2f6'
 };
 
 const TILE_BORDER_COLORS = {
@@ -16,7 +17,103 @@ const TILE_BORDER_COLORS = {
     stone: '#585858',
     food: '#c8902e',
     gold: '#e0b84f',
-    diamond: '#3bc4cf'
+    diamond: '#3bc4cf',
+    medkit: '#dcdde1'
+};
+
+export const PALETTE = {
+    'b': '#000000', 'w': '#ffffff', 'g': '#7f8c8d', 'd': '#2c3e50',
+    'S': '#B48A76', 'H': '#312520', 'P': '#4B3F72', 'N': '#9B7462', 'M': '#9C6F59', 'B': '#462C22',
+    'c': '#2ecc71', 'C': '#27ae60',
+    'Z': '#2A5D37', 'z': '#418A4F',
+    's': '#bdc3c7', 'K': '#34495e',
+    'p': '#f1a9a0', 'o': '#d24d57',
+    'e': '#111111', 'E': '#e056fd',
+    'x': '#2d3436', 'r': '#e84118', 'R': '#c23616',
+    'v': '#e67e22', 'V': '#d35400', 'U': '#27ae60'
+};
+
+export const AVATARS = {
+    steve: [
+        "HHHHHHHH",
+        "HHHHHHHH",
+        "HSSSSSSH",
+        "SwPSSPws",
+        "SSSSNNSS",
+        "SSNBNNSS",
+        "SSBBBSSS",
+        "SSSSSSSS"
+    ],
+    creeper: [
+        "cccccccc",
+        "cccccccc",
+        "ccbbccbb",
+        "ccbbccbb",
+        "cccbbccc",
+        "ccbbbbcc",
+        "ccbbbbcc",
+        "cccbbccc"
+    ],
+    zombie: [
+        "ZZZZZZZZ",
+        "ZZZZZZZZ",
+        "ZzZZZZzZ",
+        "ZzbbbbzZ",
+        "ZZZZZZZZ",
+        "ZZbbbbZZ",
+        "ZZbbbbZZ",
+        "ZZZZZZZZ"
+    ],
+    enderman: [
+        "eeeeeeee",
+        "eeeeeeee",
+        "eeeeeeee",
+        "eeeeeeee",
+        "eeeeeeee",
+        "wEEeewEE",
+        "eeeeeeee",
+        "eeeeeeee"
+    ],
+    skeleton: [
+        "ssssssss",
+        "ssssssss",
+        "sKKssKKs",
+        "ssKssKss",
+        "sssKKsss",
+        "sssKKsss",
+        "sKssKssK",
+        "ssssssss"
+    ],
+    pig: [
+        "pppppppp",
+        "pppppppp",
+        "pppppppp",
+        "pbppppbp",
+        "pppppppp",
+        "ppoopooo",
+        "ppoopooo",
+        "pppppppp"
+    ],
+    spider: [
+        "xxxxxxxx",
+        "xxxxxxxx",
+        "xxxxxxxx",
+        "rxxrrxxr",
+        "RxxRRxxR",
+        "xxxxxxxx",
+        "xxxxxxxx",
+        "xxxxxxxx"
+    ],
+    villager: [
+        "HHHHHHHH",
+        "HHHHHHHH",
+        "SSSSSSSS",
+        "SbwSSwbS",
+        "SSSUUSSS",
+        "SSVVVVSS",
+        "SSVVVVSS",
+        "SSSSSSSS"
+    ]
 };
 
 // ── Draw icons on special tiles ──
@@ -70,6 +167,13 @@ function drawTileIcon(ctx, type, x, y, size) {
         ctx.lineTo(cx - 4, cy);
         ctx.closePath();
         ctx.fill();
+    } else if (type === 'medkit') {
+        // Red cross Medkit
+        ctx.fillStyle = '#ff4757'; // bright red cross
+        // Horizontal bar
+        ctx.fillRect(cx - 4, cy - 1.5, 8, 3);
+        // Vertical bar
+        ctx.fillRect(cx - 1.5, cy - 4, 3, 8);
     }
 }
 
@@ -77,8 +181,33 @@ function drawTileIcon(ctx, type, x, y, size) {
 const LERP_FACTOR = 0.2;
 const interpState = {
     players: {},
-    mobs: {}
+    mobs: {},
+    worldHealth: {},
+    worldType: {},
+    particles: [],
+    shakeTimes: {}
 };
+
+function spawnParticles(c, r, type) {
+    let color = '#fff';
+    if (type === 'diamond') color = '#00ffff';
+    else if (type === 'gold') color = '#f1c40f';
+    else if (type === 'stone') color = '#999';
+    else if (type === 'tree') color = '#5c3a1e';
+    else if (type === 'food') color = '#e74c3c';
+    else if (type === 'medkit') color = '#ff4757';
+
+    for (let i = 0; i < 8; i++) {
+        interpState.particles.push({
+            x: c * TILE_SIZE + TILE_SIZE / 2,
+            y: r * TILE_SIZE + TILE_SIZE / 2,
+            vx: (Math.random() - 0.5) * 6,
+            vy: (Math.random() - 0.5) * 6 - 2,
+            life: 1.0,
+            color
+        });
+    }
+}
 
 function lerp(start, end, factor) {
     return start + (end - start) * factor;
@@ -142,12 +271,35 @@ export function renderGame(ctx, canvas, world, players, mobs, myId) {
     const startRow = Math.max(0, Math.floor(camY / TILE_SIZE));
     const endRow = Math.min(world.length, Math.ceil((camY + height) / TILE_SIZE) + 1);
 
+    const now = Date.now();
+
     // ── Draw Tiles ──
     for (let row = startRow; row < endRow; row++) {
         for (let col = startCol; col < endCol; col++) {
             const tile = world[row][col];
-            const screenX = col * TILE_SIZE - camX;
-            const screenY = row * TILE_SIZE - camY;
+            const key = `${col},${row}`;
+
+            if (tile.type !== 'grass') {
+                if (interpState.worldHealth[key] !== undefined && tile.health < interpState.worldHealth[key]) {
+                    spawnParticles(col, row, tile.type);
+                    interpState.shakeTimes[key] = now + 150;
+                }
+                interpState.worldHealth[key] = tile.health;
+                interpState.worldType[key] = tile.type;
+            } else if (interpState.worldHealth[key]) {
+                spawnParticles(col, row, interpState.worldType[key]);
+                delete interpState.worldHealth[key];
+                delete interpState.worldType[key];
+            }
+
+            let screenX = col * TILE_SIZE - camX;
+            let screenY = row * TILE_SIZE - camY;
+
+            // Apply shake
+            if (interpState.shakeTimes[key] && interpState.shakeTimes[key] > now) {
+                screenX += (Math.random() - 0.5) * 4;
+                screenY += (Math.random() - 0.5) * 4;
+            }
 
             // Base tile
             ctx.fillStyle = TILE_COLORS[tile.type] || '#333';
@@ -222,40 +374,18 @@ export function renderGame(ctx, canvas, world, players, mobs, myId) {
             ctx.strokeRect(screenX - 1, screenY - 1, TILE_SIZE + 2, TILE_SIZE + 2);
         }
 
-        // ── Draw "Steve" Pixel Art Avatar ──
-        // The original Steve face is roughly an 8x8 grid. We divide TILE_SIZE by 8 to get sub-pixel size.
+        // ── Draw Pixel Art Avatar ──
         const px = TILE_SIZE / 8;
-
-        // Hair (Top and sides)
-        ctx.fillStyle = '#312520'; // Dark brown
-        ctx.fillRect(screenX, screenY, TILE_SIZE, px * 2); // Top hair
-        ctx.fillRect(screenX, screenY + px * 2, px, px * 2); // Left sideburn
-        ctx.fillRect(screenX + px * 7, screenY + px * 2, px, px * 2); // Right sideburn
-
-        // Skin (Base face)
-        ctx.fillStyle = '#B48A76'; // Light tan skin
-        ctx.fillRect(screenX + px, screenY + px * 2, px * 6, px * 2);
-        ctx.fillRect(screenX, screenY + px * 4, TILE_SIZE, px * 4);
-
-        // Eyes (Whites & Pupils)
-        ctx.fillStyle = '#FFFFFF'; // Eye whites
-        ctx.fillRect(screenX + px, screenY + px * 4, px * 2, px);
-        ctx.fillRect(screenX + px * 5, screenY + px * 4, px * 2, px);
-
-        ctx.fillStyle = '#4B3F72'; // Purple/Blue pupils
-        ctx.fillRect(screenX + px * 2, screenY + px * 4, px, px);
-        ctx.fillRect(screenX + px * 5, screenY + px * 4, px, px);
-
-        // Nose
-        ctx.fillStyle = '#9B7462'; // Darker skin tone for nose
-        ctx.fillRect(screenX + px * 3, screenY + px * 5, px * 2, px);
-
-        // Mouth / Beard
-        ctx.fillStyle = '#462C22'; // Dark brown beard
-        ctx.fillRect(screenX + px * 2, screenY + px * 6, px * 4, px * 2);
-
-        ctx.fillStyle = '#9C6F59'; // Mouth opening/lips
-        ctx.fillRect(screenX + px * 3, screenY + px * 6, px * 2, px);
+        const avatarGrid = AVATARS[p.avatar || 'steve'] || AVATARS.steve;
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                const colorCode = avatarGrid[r][c];
+                if (colorCode && PALETTE[colorCode]) {
+                    ctx.fillStyle = PALETTE[colorCode];
+                    ctx.fillRect(screenX + c * px, screenY + r * px, px, px);
+                }
+            }
+        }
 
         // Direction indicator (tiny weapon/hand on the side)
         if (p.facing) {
@@ -292,5 +422,23 @@ export function renderGame(ctx, canvas, world, players, mobs, myId) {
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.lineWidth = 1;
         ctx.strokeRect(targetX, targetY, TILE_SIZE, TILE_SIZE);
+    }
+
+    // ── Draw Particles ──
+    for (let i = interpState.particles.length - 1; i >= 0; i--) {
+        const p = interpState.particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.2; // Gravity
+        p.life -= 0.05;
+
+        if (p.life <= 0) {
+            interpState.particles.splice(i, 1);
+        } else {
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = Math.max(0, p.life);
+            ctx.fillRect(p.x - camX, p.y - camY, 4, 4);
+            ctx.globalAlpha = 1.0;
+        }
     }
 }

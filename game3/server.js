@@ -15,13 +15,21 @@ app.use(cors());
 app.use(express.json());
 
 // --- MongoDB ---
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('📦 Connected to MongoDB Atlas (Darkroom)'))
-    .catch(err => console.error('❌ MongoDB error:', err));
+const MONGO_URI = process.env.MONGO_URI;
+if (MONGO_URI) {
+    mongoose.connect(MONGO_URI)
+        .then(() => console.log('📦 Connected to MongoDB Atlas (Darkroom)'))
+        .catch(err => console.error('❌ MongoDB error:', err));
+} else {
+    console.warn('⚠️ MONGO_URI not found for game3. Database features disabled.');
+}
 
 // --- Leaderboard API ---
 app.get('/api/leaderboard', async (req, res) => {
     try {
+        if (!MONGO_URI || mongoose.connection.readyState !== 1) {
+            return res.json([]);
+        }
         const top = await PlayerStats.find()
             .sort({ nightsSurvived: -1, foodEaten: -1 })
             .limit(10)
@@ -39,6 +47,7 @@ app.use(express.static(distPath));
 
 const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
+    path: '/darkroom/socket.io',
     cors: {
         origin: '*',
         methods: ['GET', 'POST'],
@@ -57,12 +66,20 @@ const TICK_RATE = 30;
 const rooms = {};
 
 const DAY_CYCLE_SECONDS = 60; // 60 seconds total
-const NIGHT_THRESHOLD = 1 / 3; // First 20s is Day (0.33), rest is Night (0.66)
+const NIGHT_THRESHOLD = 0.5; // 30s Day, 30s Night
 
 function updateAI(room) {
     const players = Object.values(room.players);
     if (room.dayProgress < NIGHT_THRESHOLD) {
-        room.enemies = {};
+        if (Object.keys(room.enemies).length > 0) {
+            room.enemies = {};
+            // Broadcast the clear state immediately
+            io.to(room.id).emit('gameState', {
+                players: room.players,
+                dayProgress: room.dayProgress,
+                enemies: {}
+            });
+        }
         return;
     }
 
@@ -74,7 +91,7 @@ function updateAI(room) {
                 id,
                 position: [(Math.random() - 0.5) * 50, 0, (Math.random() - 0.5) * 50],
                 targetId: null,
-                speed: 0.12,
+                speed: 0.18, // 50% faster than before
             };
         }
     }
@@ -248,12 +265,13 @@ io.on('connection', (socket) => {
         console.log(`👤 Player ${playerName} joined Room: ${roomId}`);
     });
 
-    socket.on('updateTransform', ({ position, rotation, isHiding }) => {
+    socket.on('updateTransform', ({ position, rotation, modelRotation, isHiding }) => {
         if (!currentRoomId || !rooms[currentRoomId]) return;
         const player = rooms[currentRoomId].players[socket.id];
         if (player) {
             player.position = position;
             player.rotation = rotation;
+            player.modelRotation = modelRotation;
             player.isHiding = isHiding;
         }
     });
@@ -316,6 +334,42 @@ io.on('connection', (socket) => {
         const player = rooms[currentRoomId].players[socket.id];
         if (player) {
             io.to(currentRoomId).emit('receive_chat', { player: player.nickname, message: data.message });
+        }
+    });
+
+    // ══════════════════════════════════════
+    //  VOICE CHAT - WebRTC Signaling
+    // ══════════════════════════════════════
+
+    // Request to initiate voice with all peers in room
+    socket.on('voice-join', () => {
+        if (!currentRoomId || !rooms[currentRoomId]) return;
+        // Notify existing players that a new voice peer joined
+        socket.to(currentRoomId).emit('voice-peer-joined', { peerId: socket.id });
+        // Send list of existing peers to the joining player
+        const existingPeers = Object.keys(rooms[currentRoomId].players).filter(id => id !== socket.id);
+        socket.emit('voice-peers', { peers: existingPeers });
+    });
+
+    // Relay WebRTC offer to target peer
+    socket.on('voice-offer', ({ targetId, offer }) => {
+        io.to(targetId).emit('voice-offer', { fromId: socket.id, offer });
+    });
+
+    // Relay WebRTC answer to target peer
+    socket.on('voice-answer', ({ targetId, answer }) => {
+        io.to(targetId).emit('voice-answer', { fromId: socket.id, answer });
+    });
+
+    // Relay ICE candidate to target peer
+    socket.on('voice-ice-candidate', ({ targetId, candidate }) => {
+        io.to(targetId).emit('voice-ice-candidate', { fromId: socket.id, candidate });
+    });
+
+    // Notify when leaving voice chat
+    socket.on('voice-leave', () => {
+        if (currentRoomId) {
+            socket.to(currentRoomId).emit('voice-peer-left', { peerId: socket.id });
         }
     });
 });

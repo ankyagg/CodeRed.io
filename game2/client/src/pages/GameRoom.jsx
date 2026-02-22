@@ -34,12 +34,17 @@ import useStore from '../store/useStore';
 import HUD from '../components/ui/HUD';
 import Scene from '../components/game/Scene';
 import Player from '../components/game/Player';
+import VoiceChat from '../components/ui/VoiceChat';
+import { useVoiceChat } from '../hooks/useVoiceChat';
 
 export default function GameRoom() {
     const { roomId } = useParams();
     const navigate = useNavigate();
     const { user, socket, room } = useStore();
     const [players, setPlayers] = useState({});
+
+    // Voice Chat Integration
+    const { isVoiceActive, isMuted, peerCount, error: voiceError, joinVoice, leaveVoice, toggleMute } = useVoiceChat(socket);
 
     useEffect(() => {
         if (!user || !socket || room !== roomId) {
@@ -175,6 +180,17 @@ export default function GameRoom() {
 
             {/* 2D Overlay HUD */}
             <HUD roomId={roomId} />
+
+            {/* Voice Chat Controls */}
+            <VoiceChat
+                isVoiceActive={isVoiceActive}
+                isMuted={isMuted}
+                peerCount={peerCount}
+                error={voiceError}
+                onJoin={joinVoice}
+                onLeave={leaveVoice}
+                onToggleMute={toggleMute}
+            />
         </div>
     );
 }

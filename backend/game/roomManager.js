@@ -18,11 +18,11 @@ function createRoom(name, hostId) {
 /**
  * Join an existing room.
  */
-function joinRoom(roomId, socketId, playerName) {
+function joinRoom(roomId, socketId, playerName, avatar) {
     const room = rooms[roomId];
     if (!room) return null;
 
-    const player = room.addPlayer(socketId, playerName);
+    const player = room.addPlayer(socketId, playerName, avatar);
     playerRoomMap[socketId] = roomId;
     return { room, player };
 }

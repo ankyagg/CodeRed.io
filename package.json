@@ -1,0 +1,28 @@
+{
+  "name": "devhacks-codered",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node master.js",
+    "build": "npm run build --prefix frontend && npm run build --prefix game2/client && npm run build --prefix game3 && npm run build --prefix game4",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Manav-Sonawane/DevHacks-CodeRed.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Manav-Sonawane/DevHacks-CodeRed/issues"
+  },
+  "homepage": "https://github.com/Manav-Sonawane/DevHacks-CodeRed#readme",
+  "description": "",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "http-proxy-middleware": "^3.0.5",
+    "socket.io-client": "^4.8.3"
+  }
+}

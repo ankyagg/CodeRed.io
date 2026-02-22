@@ -1,0 +1,25 @@
+# Nixpacks configuration for Railway deployment
+[phases.setup]
+nixPkgs = ["nodejs_20", "npm"]
+
+[phases.install]
+cmds = [
+    "npm install",
+    "npm install --prefix backend",
+    "npm install --prefix frontend",
+    "npm install --prefix game2/client",
+    "npm install --prefix game2/server",
+    "npm install --prefix game3",
+    "npm install --prefix game4"
+]
+
+[phases.build]
+cmds = [
+    "npm run build --prefix frontend || true",
+    "npm run build --prefix game2/client || true",
+    "npm run build --prefix game3 || true",
+    "npm run build --prefix game4 || true"
+]
+
+[start]
+cmd = "node master.js"

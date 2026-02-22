@@ -16,7 +16,7 @@ const PICKUP_RANGE = 2.5;
 const MAX_INVENTORY = 5;
 
 // Third-person camera settings
-const CAM_DISTANCE = 2.5;
+const CAM_DISTANCE = 3.5;
 const CAM_HEIGHT = 1.8;
 const CAM_LOOK_HEIGHT = 1.2;
 const MOUSE_SENSITIVITY = 0.002;
@@ -31,13 +31,14 @@ export function LocalPlayer({ socket, onBatteryChange, foods, onHidingChange, in
     const { camera, gl, scene } = useThree();
     const keys = usePlayerControls();
 
-    const [torchOn, setTorchOn] = useState(false);
-    const torchOnRef = useRef(false);
+    const [torchOn, setTorchOn] = useState(true);
+    const torchOnRef = useRef(true);
     const spotRef = useRef();
     const torchPointRef = useRef();
 
     const isHidingRef = useRef(false);
     const [animation, setAnimation] = useState('Idle');
+    const animRef = useRef('Idle');
     const [thirdPerson, setThirdPerson] = useState(true); // Start in TPP
 
     // Player position (separate from camera)
@@ -157,7 +158,12 @@ export function LocalPlayer({ socket, onBatteryChange, foods, onHidingChange, in
                 .normalize();
 
             playerPos.current.addScaledVector(moveDir, speed * delta);
-            setAnimation(isSprinting ? 'Run' : 'Walk');
+
+            const nextAnim = isSprinting ? 'Run' : 'Walk';
+            if (animRef.current !== nextAnim) {
+                animRef.current = nextAnim;
+                setAnimation(nextAnim);
+            }
 
             const targetAngle = Math.atan2(moveDir.x, moveDir.z);
 
@@ -178,7 +184,10 @@ export function LocalPlayer({ socket, onBatteryChange, foods, onHidingChange, in
                 yaw.current += yawDiff * 0.01;
             }
         } else {
-            setAnimation('Idle');
+            if (animRef.current !== 'Idle') {
+                animRef.current = 'Idle';
+                setAnimation('Idle');
+            }
         }
 
         // Clamp player position to room bounds
@@ -291,6 +300,7 @@ export function LocalPlayer({ socket, onBatteryChange, foods, onHidingChange, in
             socket.emit('updateTransform', {
                 position: [playerPos.current.x, playerPos.current.y, playerPos.current.z],
                 rotation: [0, yaw.current, 0],
+                modelRotation: playerModelRef.current ? playerModelRef.current.rotation.y : yaw.current,
                 isHiding: isHidingRef.current
             });
         }

@@ -1,16 +1,22 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 
-// Smart connection routing:
-// - If built (production mode), use the exact origin (this handles Ngrok perfectly)
-// - If in dev mode, try environment variables, or fallback to LAN IP
-const SERVER_URL = import.meta.env.PROD
-    ? window.location.origin
-    : (import.meta.env.VITE_BACKEND_URL || `http://${window.location.hostname}:3001`);
+const isNgrok = window.location.hostname.includes('ngrok');
+
+// Extra options to inject Ngrok bypass headers if we are specifically on an Ngrok URL.
+// Doing this indiscriminately breaks CORS on local network IPs (e.g. 192.168.x.x)
+const extraHeaders = isNgrok ? { 'ngrok-skip-browser-warning': 'true' } : {};
+
+export const socket = io({
+    path: '/survival/socket.io',
+    transports: ['polling', 'websocket'], // Must allow polling first to send ngrok headers!
+    extraHeaders
+});
 
 export default function useSocket() {
     const socketRef = useRef(null);
-    const [connected, setConnected] = useState(false);
+    const [connected, setConnected] = useState(socket.connected);
+    const [socketError, setSocketError] = useState(null);
     const [myId, setMyId] = useState(null);
     const [world, setWorld] = useState([]);
     const [players, setPlayers] = useState({});
@@ -32,26 +38,32 @@ export default function useSocket() {
     const pingStartRef = useRef(0);
 
     useEffect(() => {
-        const socket = io(SERVER_URL, {
-            path: '/survival/socket.io',
-            transports: ['websocket'],
-        });
         socketRef.current = socket;
 
-        socket.on('connect', () => {
+        // Immediately sync state if already connected!
+        if (socket.connected) {
             setConnected(true);
+        }
 
-            // Auto-reconnect if we were in a game
-            const savedRoomId = roomId; // From React state wrapper
-            const savedPlayerName = localStorage.getItem('survival_nickname');
-            if (savedRoomId && savedPlayerName) {
-                socket.emit('joinRoom', { roomId: savedRoomId, playerName: savedPlayerName });
-            }
-        });
+        const onConnect = () => {
+            setConnected(true);
+            setSocketError(null);
+            // ...
+        };
 
-        socket.on('disconnect', () => {
+        const onConnectError = (err) => {
+            console.error('Socket connection error:', err);
+            setSocketError(err.message);
             setConnected(false);
-        });
+        };
+
+        const onDisconnect = () => {
+            setConnected(false);
+        };
+
+        socket.on('connect', onConnect);
+        socket.on('connect_error', onConnectError);
+        socket.on('disconnect', onDisconnect);
 
         // ── Ping/Pong ──
         const pingInterval = setInterval(() => {
@@ -165,8 +177,10 @@ export default function useSocket() {
         });
 
         return () => {
+            socket.off('connect', onConnect);
+            socket.off('connect_error', onConnectError);
+            socket.off('disconnect', onDisconnect);
             clearInterval(pingInterval);
-            socket.disconnect();
         };
     }, []);
 
@@ -177,15 +191,15 @@ export default function useSocket() {
     }, []);
 
     // Room actions
-    const createRoom = useCallback((name, playerName) => {
+    const createRoom = useCallback((name, playerName, avatar) => {
         if (socketRef.current) {
-            socketRef.current.emit('createRoom', { name, playerName });
+            socketRef.current.emit('createRoom', { name, playerName, avatar });
         }
     }, []);
 
-    const joinRoom = useCallback((roomId, playerName) => {
+    const joinRoom = useCallback((roomId, playerName, avatar) => {
         if (socketRef.current) {
-            socketRef.current.emit('joinRoom', { roomId, playerName });
+            socketRef.current.emit('joinRoom', { roomId, playerName, avatar });
         }
     }, []);
 
@@ -229,5 +243,6 @@ export default function useSocket() {
         joinRoom,
         leaveRoom,
         refreshRooms,
+        socketError,
     };
 }

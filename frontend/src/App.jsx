@@ -5,6 +5,7 @@ import HUD from './components/HUD';
 import Lobby from './components/Lobby';
 import Leaderboard from './components/Leaderboard';
 import Chat from './components/Chat';
+import { useVoiceChat } from './hooks/useVoiceChat';
 
 export default function App() {
     const {
@@ -12,8 +13,10 @@ export default function App() {
         messages, sendChat,
         inGame, roomId, roomName, roomList,
         createRoom, joinRoom, leaveRoom, refreshRooms,
+        socketError
     } = useSocket();
 
+    const voiceControls = useVoiceChat();
     const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
 
     useEffect(() => {
@@ -46,6 +49,7 @@ export default function App() {
                 createRoom={createRoom}
                 joinRoom={joinRoom}
                 refreshRooms={refreshRooms}
+                socketError={socketError}
             />
         );
     }
@@ -67,6 +71,7 @@ export default function App() {
                 roomName={roomName}
                 onLeave={leaveRoom}
                 ping={ping}
+                voiceControls={voiceControls}
             />
             <Leaderboard
                 leaderboard={leaderboard}
@@ -83,7 +88,7 @@ export default function App() {
                     <div className="bg-gray-900 border-4 border-yellow-500 p-8 rounded text-center">
                         <p className="text-gray-300 font-mono mb-2 text-xl tracking-widest">WINNER:</p>
                         <p className="text-white font-bold text-4xl mb-4">{matchWinner.winnerName}</p>
-                        <p className="text-emerald-400 font-mono text-2xl">Score: {Math.max(0, matchWinner.score - 1000)}</p>
+                        <p className="text-emerald-400 font-mono text-2xl">Score: {matchWinner.score || 0}</p>
                     </div>
                     <p className="text-gray-500 font-mono mt-8 animate-pulse text-xs tracking-widest">Returning to lobby in 5 seconds...</p>
                 </div>

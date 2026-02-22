@@ -6,7 +6,7 @@ import React, { useEffect, useRef, useState } from 'react';
  */
 export function HUD({ health, battery, playerCount, connected, roomId, dayProgress = 0, isHiding, inventory = [], onUseItem }) {
     const healthColor = health > 50 ? '#22dd55' : health > 25 ? '#ffaa00' : '#ff3322';
-    const isNight = dayProgress >= 0.333;
+    const isNight = dayProgress >= 0.5;
     const statusText = isNight ? '⚠️ NIGHT SHIFT: SURVIVE' : '☀️ DAYTIME: RESTOCK';
     const statusColor = isNight ? '#ff3e3e' : '#4a9eff';
 
@@ -131,6 +131,32 @@ export function HUD({ health, battery, playerCount, connected, roomId, dayProgre
                 >EXIT</button>
             </div>
 
+            {/* ── Phase Counter (Below Room Info) ──────────────── */}
+            <div style={{
+                position: 'absolute',
+                top: 85,
+                left: 16,
+                ...panelBase,
+                minWidth: 120,
+                textAlign: 'center',
+                borderColor: statusColor + '44'
+            }}>
+                <div style={{ fontSize: 9, color: '#777', letterSpacing: 1, marginBottom: 2 }}>PHASE ENDS IN</div>
+                <div style={{ fontSize: 18, fontWeight: 'bold', color: statusColor, fontFamily: 'monospace' }}>
+                    {(() => {
+                        const totalSec = 60;
+                        const nightThresh = 0.5;
+                        let remaining = 0;
+                        if (dayProgress < nightThresh) {
+                            remaining = (nightThresh - dayProgress) * totalSec;
+                        } else {
+                            remaining = (1.0 - dayProgress) * totalSec;
+                        }
+                        return Math.ceil(remaining) + 's';
+                    })()}
+                </div>
+            </div>
+
             {/* ── Day/Night Status ────────────────────────── */}
             <div style={{
                 position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)',
@@ -141,8 +167,8 @@ export function HUD({ health, battery, playerCount, connected, roomId, dayProgre
                 <div style={{ width: '100%', height: 3, background: 'rgba(255,255,255,0.1)', marginTop: 6, borderRadius: 2 }}>
                     <div style={{
                         width: isNight
-                            ? `${((dayProgress - 0.333) / 0.666) * 100}%`
-                            : `${(dayProgress / 0.333) * 100}%`,
+                            ? `${((dayProgress - 0.5) / 0.5) * 100}%`
+                            : `${(dayProgress / 0.5) * 100}%`,
                         height: '100%',
                         background: statusColor,
                         transition: 'width 1s linear'

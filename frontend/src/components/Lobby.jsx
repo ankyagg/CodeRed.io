@@ -1,4 +1,39 @@
 import { useState, useEffect } from 'react';
+import { AVATARS, PALETTE } from '../game/renderer';
+
+function AvatarPreview({ avatarName, isSelected, onClick }) {
+    const grid = AVATARS[avatarName];
+    if (!grid) return null;
+
+    return (
+        <div
+            onClick={onClick}
+            style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(8, 1fr)',
+                width: '36px',
+                height: '36px',
+                cursor: 'pointer',
+                border: isSelected ? '2px solid #fbbf24' : '2px solid transparent',
+                borderRadius: '6px',
+                padding: '2px',
+                backgroundColor: isSelected ? 'rgba(255,255,255,0.1)' : 'transparent',
+                transition: 'all 0.2s',
+            }}
+            title={avatarName}
+            className="hover:bg-white/10 hover:scale-110"
+        >
+            {grid.flatMap((row, rIdx) =>
+                row.split('').map((char, cIdx) => (
+                    <div
+                        key={`${rIdx}-${cIdx}`}
+                        style={{ backgroundColor: PALETTE[char] || 'transparent' }}
+                    />
+                ))
+            )}
+        </div>
+    );
+}
 
 // Ground block strip — rows of grass/dirt blocks across the bottom
 function GroundStrip() {
@@ -11,20 +46,22 @@ function GroundStrip() {
     );
 }
 
-export default function Lobby({ connected, roomList, createRoom, joinRoom, refreshRooms }) {
+export default function Lobby({ connected, roomList, createRoom, joinRoom, refreshRooms, socketError }) {
     const [newRoomName, setNewRoomName] = useState('');
     const [playerName, setPlayerName] = useState(() => localStorage.getItem('survival_nickname') || '');
+    const [playerAvatar, setPlayerAvatar] = useState(() => localStorage.getItem('survival_avatar') || 'steve');
     const [globalLeaderboard, setGlobalLeaderboard] = useState([]);
     const [loadingLeaderboard, setLoadingLeaderboard] = useState(true);
 
     useEffect(() => {
         const fetchLeaderboard = async () => {
             try {
-                const leaderboardUrl = import.meta.env.PROD
-                    ? '/survival/api/leaderboard'
-                    : `http://${window.location.hostname}:3001/api/leaderboard`;
+                const leaderboardUrl = `/api/leaderboard`;
 
-                const res = await fetch(leaderboardUrl);
+                const isNgrok = window.location.hostname.includes('ngrok');
+                const headers = isNgrok ? { 'ngrok-skip-browser-warning': 'true' } : {};
+
+                const res = await fetch(leaderboardUrl, { headers });
                 if (res.ok) {
                     const data = await res.json();
                     setGlobalLeaderboard(data);
@@ -42,7 +79,8 @@ export default function Lobby({ connected, roomList, createRoom, joinRoom, refre
         e.preventDefault();
         if (newRoomName.trim() && playerName.trim()) {
             localStorage.setItem('survival_nickname', playerName.trim());
-            createRoom(newRoomName.trim(), playerName.trim());
+            localStorage.setItem('survival_avatar', playerAvatar);
+            createRoom(newRoomName.trim(), playerName.trim(), playerAvatar);
             setNewRoomName('');
         } else if (!playerName.trim()) {
             alert('Please enter a nickname to play!');
@@ -52,7 +90,8 @@ export default function Lobby({ connected, roomList, createRoom, joinRoom, refre
     const handleJoin = (roomId) => {
         if (playerName.trim()) {
             localStorage.setItem('survival_nickname', playerName.trim());
-            joinRoom(roomId, playerName.trim());
+            localStorage.setItem('survival_avatar', playerAvatar);
+            joinRoom(roomId, playerName.trim(), playerAvatar);
         } else {
             alert('Please enter a nickname to play!');
         }
@@ -83,10 +122,17 @@ export default function Lobby({ connected, roomList, createRoom, joinRoom, refre
                 <div className="lobby-header">
                     <span className="lobby-logo">⛏️</span>
                     <h1 className="lobby-title">SURVIVAL SANDBOX</h1>
-                    <p className="lobby-subtitle">
-                        <span className={`status-dot ${connected ? 'online' : 'offline'}`} />
-                        {connected ? 'SERVER ONLINE' : 'CONNECTING...'}
-                    </p>
+                    <div className="lobby-subtitle" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                        <div>
+                            <span className={`status-dot ${connected ? 'online' : 'offline'}`} />
+                            {connected ? 'SERVER ONLINE' : 'CONNECTING...'}
+                        </div>
+                        {socketError && (
+                            <div className="text-[7px] text-red-500 font-bold bg-black/40 px-2 py-1 border border-red-500/20">
+                                ⚠️ {socketError}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="lobby-panels">
@@ -101,10 +147,24 @@ export default function Lobby({ connected, roomList, createRoom, joinRoom, refre
                                     value={playerName}
                                     onChange={(e) => setPlayerName(e.target.value)}
                                     placeholder="Enter your name..."
-                                    className="room-input mb-4"
+                                    className="room-input w-full"
                                     maxLength={16}
                                     autoFocus
                                 />
+                            </div>
+
+                            <div className="mb-4">
+                                <label className="block text-xs font-bold text-gray-400 mb-2 tracking-widest">CHOOSE AVATAR</label>
+                                <div className="flex flex-wrap gap-2 p-3 bg-black/40 rounded-lg border border-white/5">
+                                    {Object.keys(AVATARS).map(a => (
+                                        <AvatarPreview
+                                            key={a}
+                                            avatarName={a}
+                                            isSelected={playerAvatar === a}
+                                            onClick={() => setPlayerAvatar(a)}
+                                        />
+                                    ))}
+                                </div>
                             </div>
 
                             <h3 className="block text-xs font-bold text-gray-400 mb-1 tracking-widest">NEW WORLD</h3>

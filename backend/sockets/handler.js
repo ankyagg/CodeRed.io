@@ -33,7 +33,7 @@ function setupSocketHandlers(io) {
         socket.emit('roomList', roomManager.listRooms());
 
         // ── Create Room ──
-        socket.on('createRoom', ({ name, playerName }) => {
+        socket.on('createRoom', ({ name, playerName, avatar }) => {
             // Leave current room if any
             _leaveCurrentRoom(io, socket);
 
@@ -47,7 +47,7 @@ function setupSocketHandlers(io) {
             socket.join(room.id);
 
             // Add player to room (createRoom creates the Room but doesn't add the host as a player)
-            const result = roomManager.joinRoom(room.id, socket.id, playerName);
+            const result = roomManager.joinRoom(room.id, socket.id, playerName, avatar);
 
             console.log(`Room "${roomName}" (${room.id}) created by ${socket.id} (as ${playerName})`);
 
@@ -64,7 +64,7 @@ function setupSocketHandlers(io) {
         });
 
         // ── Join Room ──
-        socket.on('joinRoom', ({ roomId, playerName }) => {
+        socket.on('joinRoom', ({ roomId, playerName, avatar }) => {
             // Leave current room if any
             _leaveCurrentRoom(io, socket);
 
@@ -78,7 +78,7 @@ function setupSocketHandlers(io) {
             socket.join(room.id);
 
             // Add player to room
-            const result = roomManager.joinRoom(room.id, socket.id, playerName);
+            const result = roomManager.joinRoom(room.id, socket.id, playerName, avatar);
             if (!result) {
                 socket.emit('error', { message: 'Failed to join room' });
                 return;
@@ -130,6 +130,9 @@ function setupSocketHandlers(io) {
                 if (tile && tile.type === TILE.FOOD) {
                     room.eatFood(socket.id);
                     room.damageTile(p.x, p.y, 999);
+                } else if (tile && tile.type === TILE.MEDKIT) {
+                    room.useMedkit(socket.id);
+                    room.damageTile(p.x, p.y, 999);
                 }
                 broadcastRoomDelta(io, room);
             }
@@ -180,6 +183,36 @@ function setupSocketHandlers(io) {
                 message: data.message,
                 timestamp: Date.now()
             });
+        });
+
+        // ── VOICE CHAT - WebRTC Signaling ──
+        socket.on('voice-join', () => {
+            const room = roomManager.getRoomByPlayer(socket.id);
+            if (!room) return;
+            // Notify existing players that a new voice peer joined
+            socket.to(room.id).emit('voice-peer-joined', { peerId: socket.id });
+            // Send list of existing peers to the joining player
+            const existingPeers = Object.keys(room.players).filter(id => id !== socket.id);
+            socket.emit('voice-peers', { peers: existingPeers });
+        });
+
+        socket.on('voice-offer', ({ targetId, offer }) => {
+            io.to(targetId).emit('voice-offer', { fromId: socket.id, offer });
+        });
+
+        socket.on('voice-answer', ({ targetId, answer }) => {
+            io.to(targetId).emit('voice-answer', { fromId: socket.id, answer });
+        });
+
+        socket.on('voice-ice-candidate', ({ targetId, candidate }) => {
+            io.to(targetId).emit('voice-ice-candidate', { fromId: socket.id, candidate });
+        });
+
+        socket.on('voice-leave', () => {
+            const room = roomManager.getRoomByPlayer(socket.id);
+            if (room) {
+                socket.to(room.id).emit('voice-peer-left', { peerId: socket.id });
+            }
         });
 
         // ── Disconnect ──

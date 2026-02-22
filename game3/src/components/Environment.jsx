@@ -184,7 +184,7 @@ function BalloonCluster({ position }) {
 
 /* ─── DOOR WITH SUNLIGHT (no point light — just emissive glow) ── */
 function Door({ position, rotation = [0, 0, 0], dayProgress }) {
-    const sun = dayProgress < 0.333 ? Math.sin((dayProgress / 0.333) * Math.PI) : 0;
+    const sun = dayProgress < 0.5 ? Math.sin((dayProgress / 0.5) * Math.PI) : 0;
     return (
         <group position={position} rotation={rotation}>
             <mesh position={[0, 2, 0]}><boxGeometry args={[2.5, 4, .15]} /><primitive object={M.doorFrame} attach="material" /></mesh>
@@ -270,7 +270,9 @@ export function Environment({ dayProgress = 0 }) {
 
             {/* ═══════ CEILING LIGHTS (brighter!) ═════════ */}
             {ceilingLights.map((pos, i) => {
-                const sunFactor = dayProgress < 0.333 ? Math.sin((dayProgress / 0.333) * Math.PI) : 0;
+                const dp = dayProgress; // Use dayProgress directly
+                // Peak the sun only during the first 50% (Daytime)
+                const sunFactor = dp < 0.5 ? Math.sin((dp / 0.5) * Math.PI) : 0;
                 return (
                     <group key={i}>
                         <mesh position={pos}><boxGeometry args={[.3, .08, 3]} /><primitive object={M.lightBox} attach="material" /></mesh>

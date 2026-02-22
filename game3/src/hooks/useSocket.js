@@ -15,6 +15,9 @@ export function useSocket() {
     const [messages, setMessages] = useState([]);
 
     const myIdRef = useRef(null);
+    const healthRef = useRef(100);
+    const progressRef = useRef(0);
+    const enemiesRef = useRef({});
 
     useEffect(() => {
         socket.on('init', ({ playerId, players, foods: initialFoods }) => {
@@ -36,15 +39,29 @@ export function useSocket() {
             const remote = {};
             for (const [id, p] of Object.entries(players)) {
                 if (id === myId) {
-                    setMyHealth(p.health);
+                    if (p.health !== healthRef.current) {
+                        healthRef.current = p.health;
+                        setMyHealth(p.health);
+                    }
                 } else {
                     remote[id] = p;
                 }
             }
             setRemotePlayers(remote);
             setPlayerCount(Object.keys(players).length);
-            setDayProgress(dp);
-            setEnemies(es);
+
+            if (Math.abs(dp - progressRef.current) > 0.001) {
+                progressRef.current = dp;
+                setDayProgress(dp);
+            }
+
+            // Sync enemies only if count or IDs changed
+            const enemyIds = Object.keys(es);
+            const prevEnemyIds = Object.keys(enemiesRef.current);
+            if (enemyIds.length !== prevEnemyIds.length || enemyIds.some(id => !enemiesRef.current[id])) {
+                enemiesRef.current = es;
+                setEnemies(es);
+            }
         });
 
         socket.on('playerJoined', (player) => {

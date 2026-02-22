@@ -5,7 +5,8 @@ const TILE = {
   STONE: 'stone',
   FOOD: 'food',
   GOLD: 'gold',
-  DIAMOND: 'diamond'
+  DIAMOND: 'diamond',
+  MEDKIT: 'medkit' // New rare item!
 };
 
 // ── Map ──
@@ -17,8 +18,9 @@ const TILE_HEALTH = {
   [TILE.TREE]: 3,
   [TILE.STONE]: 5,
   [TILE.FOOD]: 1,
-  [TILE.GOLD]: 8,
-  [TILE.DIAMOND]: 12
+  [TILE.GOLD]: 20,
+  [TILE.DIAMOND]: 30,
+  [TILE.MEDKIT]: 1
 };
 
 // ── Solid tiles (block movement) ──
@@ -31,6 +33,7 @@ const HUNGER_TICK_MS = 5000;       // lose 2 hunger every 5s
 const HUNGER_LOSS_PER_TICK = 2;
 const STARVATION_DAMAGE = 5;       // damage when hunger is 0
 const FOOD_HUNGER_RESTORE = 20;
+const MEDKIT_HEALTH_RESTORE = 50; // New! Replenishes massive health
 const PLAYER_ATTACK_DAMAGE = 15;
 
 // ── Match ──
@@ -51,6 +54,7 @@ const MOB_TYPES = {
 const SCORE_PER_KILL = 50;
 const SCORE_PER_BLOCK_BREAK = 5;
 const SCORE_PER_SURVIVAL_TICK = 1;
+const SCORE_PER_FOOD = 15;
 
 // ── Leaderboard ──
 const LEADERBOARD_BROADCAST_MS = 1000; // Update leaderboard every 1 second
@@ -67,6 +71,7 @@ module.exports = {
   HUNGER_LOSS_PER_TICK,
   STARVATION_DAMAGE,
   FOOD_HUNGER_RESTORE,
+  MEDKIT_HEALTH_RESTORE,
   PLAYER_ATTACK_DAMAGE,
   MAX_SCORE,
   MOB_COUNT,
@@ -76,5 +81,6 @@ module.exports = {
   SCORE_PER_KILL,
   SCORE_PER_BLOCK_BREAK,
   SCORE_PER_SURVIVAL_TICK,
+  SCORE_PER_FOOD,
   LEADERBOARD_BROADCAST_MS,
 };

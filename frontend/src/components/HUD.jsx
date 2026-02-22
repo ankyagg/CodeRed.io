@@ -1,4 +1,4 @@
-export default function HUD({ players, myId, connected, roomName, onLeave, ping }) {
+export default function HUD({ players, myId, connected, roomName, onLeave, ping, voiceControls }) {
     const me = players[myId];
     const playerCount = Object.keys(players).length;
 
@@ -27,6 +27,22 @@ export default function HUD({ players, myId, connected, roomName, onLeave, ping 
                 <div className="pointer-events-auto flex items-center gap-3">
                     <div className="bg-black/60 backdrop-blur-md rounded-xl px-4 py-3 border border-white/10 text-right">
                         <p className="text-xs text-gray-300 font-mono leading-relaxed">
+                            {voiceControls && !voiceControls.isVoiceActive && (
+                                <button onClick={voiceControls.joinVoice} className="text-emerald-400 hover:text-emerald-300 font-bold mr-3 tracking-widest">
+                                    [ JOIN VOICE ]
+                            {voiceControls.error && <span className='text-red-400 absolute top-12 right-4 bg-black p-2 border border-red-500 rounded text-xs'>Error: {voiceControls.error}</span>}
+                                </button>
+                            )}
+                            {voiceControls && voiceControls.isVoiceActive && (
+                                <span className="mr-3 inline-flex items-center">
+                                    <button onClick={voiceControls.toggleMute} className={`${voiceControls.isMuted ? 'text-red-400' : 'text-emerald-400'} font-bold hover:opacity-80`}>
+                                        {voiceControls.isMuted ? '🔇 MUTED' : '🎙️ LIVE'}
+                                    </button>
+                                    <span className="text-gray-500 mx-2">|</span>
+                                    <span className="text-emerald-500 font-bold" title="Connected Peers">👥 {voiceControls.peerCount}</span>
+                                </span>
+                            )}
+                            &nbsp;&nbsp;
                             <span className="text-white font-bold">WASD</span> Move &nbsp;·&nbsp;
                             <span className="text-white font-bold">E</span> Break &nbsp;·&nbsp;
                             <span className="text-white font-bold">Space</span> Attack
@@ -50,7 +66,7 @@ export default function HUD({ players, myId, connected, roomName, onLeave, ping 
                         {/* Score Badge */}
                         <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-md px-4 py-1.5 rounded-full border border-yellow-500/30 shadow-[0_0_15px_rgba(234,179,8,0.2)]">
                             <span className="text-xs font-bold text-gray-400 mr-2 uppercase tracking-wide">Score</span>
-                            <span className="font-mono font-bold text-yellow-400 text-sm">{Math.max(0, (me.score || 1000) - 1000).toLocaleString()}</span>
+                            <span className="font-mono font-bold text-yellow-400 text-sm">{(me.score || 0).toLocaleString()}</span>
                         </div>
 
                         {/* Health */}
@@ -106,3 +122,4 @@ export default function HUD({ players, myId, connected, roomName, onLeave, ping 
         </div>
     );
 }
+

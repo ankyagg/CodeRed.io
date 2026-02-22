@@ -9,12 +9,13 @@ import { PlayerModel } from './PlayerModel.jsx';
  * Smoothly interpolates position from server snapshots.
  * Shows a SpotLight torch when that player's torchOn flag is true.
  */
-export function RemotePlayer({ playerData }) {
+export const RemotePlayer = React.memo(({ playerData }) => {
     const groupRef = useRef();
     const targetPos = useRef(new THREE.Vector3(...(playerData.position ?? [0, 1.6, 0])));
     const currentPos = useRef(new THREE.Vector3(...(playerData.position ?? [0, 1.6, 0])));
     const spotRef = useRef();
     const [animation, setAnimation] = useState('Idle');
+    const animRef = useRef('Idle');
 
     // Derive a stable hue from the player's socket ID for a unique colour (if we still need it for anything)
     const bodyHue = useMemo(() => {
@@ -44,10 +45,14 @@ export function RemotePlayer({ playerData }) {
         const distMoved = oldPos.distanceTo(currentPos.current);
         const speed = distMoved / delta;
 
+        let nextAnim = 'Idle';
         if (speed > 0.1) {
-            setAnimation(speed > 8 ? 'Run' : 'Walk');
-        } else {
-            setAnimation('Idle');
+            nextAnim = speed > 8 ? 'Run' : 'Walk';
+        }
+
+        if (animRef.current !== nextAnim) {
+            animRef.current = nextAnim;
+            setAnimation(nextAnim);
         }
 
         // Server position is camera/head height; place group so feet are at y=0
@@ -57,21 +62,28 @@ export function RemotePlayer({ playerData }) {
             currentPos.current.z
         );
 
-        // Rotate body to face the direction the remote player is looking (Y axis only)
-        if (playerData.rotation) {
+        // Rotate body to face the direction the remote player is actually moving/facing
+        if (playerData.modelRotation !== undefined) {
+            groupRef.current.rotation.y = playerData.modelRotation;
+        } else if (playerData.rotation) {
             groupRef.current.rotation.y = playerData.rotation[1];
         }
 
         // Position SpotLight at head level for torch
-        if (spotRef.current && playerData.torchOn) {
-            // Torch hangs at head height, pointed forward
-            const dir = new THREE.Vector3(0, 0, -1);
-            if (playerData.rotation) {
-                dir.applyEuler(new THREE.Euler(0, playerData.rotation[1], 0, 'YXZ'));
+        if (spotRef.current) {
+            // Set intensity based on torchOn status to avoid mounting/unmounting overhead
+            spotRef.current.intensity = playerData.torchOn ? 50 : 0;
+
+            if (playerData.torchOn) {
+                // Torch hangs at head height, pointed forward
+                const dir = new THREE.Vector3(0, 0, -1);
+                if (playerData.rotation) {
+                    dir.applyEuler(new THREE.Euler(0, playerData.rotation[1], 0, 'YXZ'));
+                }
+                const target = spotRef.current.target;
+                target.position.set(dir.x * 10, 1.6 + dir.y * 2, dir.z * 10);
+                target.updateMatrixWorld();
             }
-            const target = spotRef.current.target;
-            target.position.set(dir.x * 10, 1.6 + dir.y * 2, dir.z * 10);
-            target.updateMatrixWorld();
         }
     });
 
@@ -106,19 +118,17 @@ export function RemotePlayer({ playerData }) {
             </Billboard>
 
             {/* Torch SpotLight (visible to all other clients) */}
-            {playerData.torchOn && (
-                <spotLight
-                    ref={spotRef}
-                    position={[0, 1.6, 0.15]}
-                    color="#ffe8c0"
-                    intensity={50}
-                    angle={Math.PI / 7}
-                    penumbra={0.4}
-                    distance={20}
-                    decay={2}
-                    castShadow={false}
-                />
-            )}
+            <spotLight
+                ref={spotRef}
+                position={[0, 1.6, 0.15]}
+                color="#ffe8c0"
+                intensity={0}
+                angle={Math.PI / 7}
+                penumbra={0.4}
+                distance={20}
+                decay={2}
+                castShadow={false}
+            />
         </group>
     );
-}
+});

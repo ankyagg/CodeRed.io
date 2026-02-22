@@ -21,13 +21,16 @@ export default function Lobby() {
     const connectToRoom = (code) => {
         // Dev: connect directly to backend on 3003.
         // Production/ngrok: connect via proxy path /escape-socket which the game-hub-proxy forwards to port 3003.
-        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const serverUrl = isLocal
-            ? `http://localhost:3003`
-            : `${window.location.protocol}//${window.location.host}`;
-        const socketPath = isLocal ? '/socket.io' : '/escape-socket/socket.io';
+        const serverUrl = `${window.location.protocol}//${window.location.host}`;
+        const socketPath = '/escape/socket.io';
 
-        const newSocket = io(serverUrl, { path: socketPath });
+        const newSocket = io(serverUrl, {
+            path: socketPath,
+            transports: ['polling', 'websocket'],
+            extraHeaders: {
+                'ngrok-skip-browser-warning': 'true'
+            }
+        });
 
         newSocket.on('connect', () => {
             newSocket.emit('join_room', { roomId: code, username: user?.username }, (response) => {

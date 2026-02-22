@@ -1,6 +1,8 @@
 const gameStateManager = require('./gameState');
 
 module.exports = (io, socket) => {
+    let currentVoiceRoom = null;
+
     socket.on('join_room', (data, callback) => {
         // Support backward compatibility if frontend is still sending just a string, 
         // OR the new object format `{ roomId, username }`
@@ -8,6 +10,8 @@ module.exports = (io, socket) => {
         const username = typeof data === 'string' ? undefined : data.username;
 
         socket.join(roomId);
+        currentVoiceRoom = roomId;
+
         const roomState = gameStateManager.getRoom(roomId);
         roomState.addPlayer(socket.id, username);
         socket.to(roomId).emit('player_joined', { id: socket.id, username });
@@ -177,7 +181,49 @@ module.exports = (io, socket) => {
                 const roomState = gameStateManager.getRoom(roomId);
                 roomState.removePlayer(socket.id);
                 socket.to(roomId).emit('player_left', { id: socket.id });
+                // Voice chat cleanup
+                socket.to(roomId).emit('voice-peer-left', { peerId: socket.id });
             }
+        }
+    });
+
+    // ══════════════════════════════════════
+    //  VOICE CHAT - WebRTC Signaling
+    // ══════════════════════════════════════
+
+    // Request to initiate voice with all peers in room
+    socket.on('voice-join', () => {
+        if (!currentVoiceRoom) return;
+        // Notify existing players that a new voice peer joined
+        socket.to(currentVoiceRoom).emit('voice-peer-joined', { peerId: socket.id });
+
+        // Send list of existing peers in the same room to the joining player
+        const room = io.sockets.adapter.rooms.get(currentVoiceRoom);
+        if (room) {
+            const existingPeers = Array.from(room).filter(id => id !== socket.id);
+            socket.emit('voice-peers', { peers: existingPeers });
+        }
+    });
+
+    // Relay WebRTC offer to target peer
+    socket.on('voice-offer', ({ targetId, offer }) => {
+        io.to(targetId).emit('voice-offer', { fromId: socket.id, offer });
+    });
+
+    // Relay WebRTC answer to target peer
+    socket.on('voice-answer', ({ targetId, answer }) => {
+        io.to(targetId).emit('voice-answer', { fromId: socket.id, answer });
+    });
+
+    // Relay ICE candidate to target peer
+    socket.on('voice-ice-candidate', ({ targetId, candidate }) => {
+        io.to(targetId).emit('voice-ice-candidate', { fromId: socket.id, candidate });
+    });
+
+    // Notify when leaving voice chat
+    socket.on('voice-leave', () => {
+        if (currentVoiceRoom) {
+            socket.to(currentVoiceRoom).emit('voice-peer-left', { peerId: socket.id });
         }
     });
 };

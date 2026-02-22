@@ -8,12 +8,19 @@ const { Server } = require('socket.io');
 const app = express();
 const server = http.createServer(app);
 
+const path = require('path');
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 
+// Serve static frontend
+const distPath = path.join(__dirname, '../client/dist');
+app.use(express.static(distPath));
+
 // Socket.io Setup
 const io = new Server(server, {
+    path: '/escape/socket.io',
     cors: {
         origin: "*", // Allow all origins for LAN testing
         methods: ["GET", "POST"]
@@ -32,8 +39,9 @@ io.on('connection', (socket) => {
     });
 });
 
-app.get('/', (req, res) => {
-    res.send('Escape Room API is running...');
+// Fallback all routes to index.html for React Router compatibility
+app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
 });
 
 const PORT = process.env.PORT || 3003;
