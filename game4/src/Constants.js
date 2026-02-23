@@ -1,29 +1,33 @@
 
 // ── Canvas ────────────────────────────────────────────────
-export const W = 560;
-export const H = 700;
+// ── Canvas ────────────────────────────────────────────────
+export const W = 700;
+export const H = 900;
 
 // ── Grid ─────────────────────────────────────────────────
 export const COLS = 7;
 export const ROWS = 6;
-export const CELL = 54;   // px per cell — slightly smaller to fit
+export const CELL_W = 54 * 1.5;   // 81
+export const CELL_H = 54 * 1.2;   // 64.8
 
-const GRID_W = COLS * CELL;           // 378
-export const GRID_LEFT = (W - GRID_W) / 2;  // 91
-export const GRID_TOP = 200;
-export const GRID_BOTTOM = GRID_TOP + ROWS * CELL; // 524
+export const GRID_W = COLS * CELL_W;           // 567
+export const GRID_H = ROWS * CELL_H;           // 388.8
+export const GRID_LEFT = (W - GRID_W) / 2;     // 66.5
+export const GRID_TOP = 180;
+export const GRID_BOTTOM = GRID_TOP + GRID_H;
 
 // ── Hoops  ────────────────────────────────────────────────
-// Placed just above the grid so the ball arcs through them
-export const HOOP_Y = GRID_TOP - 36;  // 164
-export const HOOP_W = CELL * 0.68;    // opening width
-export const HOOP_DETECT_BAND = 30;             // detection band above/below HOOP_Y
+export const HOOP_Y = GRID_TOP - 40;
+export const HOOP_W = CELL_W * 0.7;
+export const HOOP_DETECT_BAND = 30;
 
 // ── Ball ──────────────────────────────────────────────────
 export const BALL_R = 17;
+export const SCALE_CLOSE = 2.6;  // Adjusted to match new spawn
+export const SCALE_FAR = 1.0;
 
-// ── Spawn — centred horizontally, well below the grid ────
-export const SPAWN = { x: W / 2, y: 640 };
+// ── Spawn — Placed just below the grid to allow plenty of pull-back space ────
+export const SPAWN = { x: W / 2, y: 650 };
 
 // ── Physics ───────────────────────────────────────────────
 export const GRAVITY = 1;
@@ -44,7 +48,7 @@ export const PHYSICS = {
     BALL_RADIUS: BALL_R,
     GRID_COLS: COLS,
     GRID_ROWS: ROWS,
-    CELL_SIZE: CELL,
+    CELL_SIZE: CELL_W,
     GRID_BOTTOM,
     HOOP_Y,
     BALL_SPAWN: SPAWN,

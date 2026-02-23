@@ -19,23 +19,36 @@ export default class Multiplayer {
     }
 
     connect() {
+        console.log('[Multiplayer] Connecting to:', WS_URL);
         return new Promise((resolve, reject) => {
-            const ws = new WebSocket(WS_URL);
-            this.ws = ws;
+            try {
+                const ws = new WebSocket(WS_URL);
+                this.ws = ws;
 
-            ws.onopen = () => resolve();
-            ws.onerror = () => reject(new Error('Cannot connect to game server'));
+                ws.onopen = () => {
+                    console.log('[Multiplayer] WebSocket Open');
+                    resolve();
+                };
+                ws.onerror = (err) => {
+                    console.error('[Multiplayer] WebSocket Error:', err);
+                    reject(new Error('Cannot connect to game server'));
+                };
 
-            ws.onmessage = (ev) => {
-                try {
-                    const msg = JSON.parse(ev.data);
-                    this._dispatch(msg);
-                } catch (_) { }
-            };
+                ws.onmessage = (ev) => {
+                    try {
+                        const msg = JSON.parse(ev.data);
+                        this._dispatch(msg);
+                    } catch (_) { }
+                };
 
-            ws.onclose = () => {
-                this._dispatch({ type: 'DISCONNECTED' });
-            };
+                ws.onclose = () => {
+                    console.log('[Multiplayer] WebSocket Closed');
+                    this._dispatch({ type: 'DISCONNECTED' });
+                };
+            } catch (e) {
+                console.error('[Multiplayer] Constructor Error:', e);
+                reject(e);
+            }
         });
     }
 

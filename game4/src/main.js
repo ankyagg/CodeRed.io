@@ -1,5 +1,6 @@
 import Multiplayer from './multiplayer.js';
 import Game from './Game.js';
+import * as C from './Constants.js';
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let mp = null;
@@ -93,18 +94,21 @@ function showGame() {
 
 // ── Init canvas ────────────────────────────────────────────────────────────────
 function initCanvas() {
-    canvas.width = 560;
-    canvas.height = 700;
+    canvas.width = C.W;
+    canvas.height = C.H;
 }
 
 // ── Lobby connection ──────────────────────────────────────────────────────────
 async function connectToServer() {
+    console.log('[Main] connectToServer start');
     mp = new Multiplayer();
 
     try {
         await mp.connect();
+        console.log('[Main] Connected successfully');
         setLobbyStatus('✅ Connected to server');
     } catch (e) {
+        console.error('[Main] Connection failed:', e);
         setLobbyStatus('⚠️ Server offline — only local play available', true);
         mp = null;
         return;
@@ -283,6 +287,7 @@ chatForm?.addEventListener('submit', (e) => {
 });
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
+console.log('[Main] Bootstrapping...');
 showLobby();
 connectToServer();
 loadLanUrl(); // fetch and display LAN share URL

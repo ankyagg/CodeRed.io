@@ -24,12 +24,11 @@ export default function Lobby() {
         const serverUrl = `${window.location.protocol}//${window.location.host}`;
         const socketPath = '/escape/socket.io';
 
+        const isNgrok = window.location.hostname.includes('ngrok');
         const newSocket = io(serverUrl, {
             path: socketPath,
             transports: ['polling', 'websocket'],
-            extraHeaders: {
-                'ngrok-skip-browser-warning': 'true'
-            }
+            ...(isNgrok ? { extraHeaders: { 'ngrok-skip-browser-warning': 'true' } } : {})
         });
 
         newSocket.on('connect', () => {

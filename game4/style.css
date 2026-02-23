@@ -748,7 +748,7 @@ body {
 /* ── Scoreboard HUD — key NBA 2K element ── */
 #game-info {
     width: 100%;
-    max-width: 560px;
+    max-width: 700px;
     display: flex;
     align-items: stretch;
     position: relative;
@@ -865,18 +865,53 @@ body {
     min-width: 140px;
 }
 
-/* Canvas */
+/* Canvas container */
 #game-container {
     position: relative;
     z-index: 1;
     width: 100%;
-    max-width: 560px;
-    aspect-ratio: 560 / 700;
-    border: 1px solid rgba(200, 16, 46, 0.3);
-    border-top: none;
-    box-shadow: 0 0 50px rgba(200, 16, 46, 0.2), 0 0 100px rgba(0, 0, 0, 0.7);
+    max-width: 700px;
+    max-height: calc(100vh - 120px);
+    aspect-ratio: 700 / 900;
+    border: none;
     cursor: crosshair;
+    overflow: visible;
+    /* Let glows and shadows overflow */
+    margin-bottom: auto;
+    /* Push footer down */
+}
+
+/* ── Full Width Wood Launcher Floor ── */
+#full-width-floor {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: 25vh;
+    background: linear-gradient(180deg, #5a381a 0%, #7d4f26 30%, #6b4322 60%, #3d2510 100%);
+    border-top: 2px solid rgba(255, 255, 255, 0.12);
+    z-index: 0;
+    pointer-events: none;
+    /* Parquet pattern */
+    background-image: repeating-linear-gradient(180deg, transparent, transparent 17px, rgba(0, 0, 0, 0.35) 17px, rgba(0, 0, 0, 0.35) 18px), linear-gradient(180deg, #5a381a 0%, #7d4f26 30%, #6b4322 60%, #3d2510 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     overflow: hidden;
+}
+
+#full-width-floor .floor-logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-style: italic;
+    font-weight: 900;
+    font-size: 15vw;
+    line-height: 1;
+    color: rgba(0, 0, 0, 0.12);
+    user-select: none;
+    text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.05);
+    /* Slight decal effect */
+    transform: translateY(-2vh);
+    /* Adjust visual center */
 }
 
 #game-canvas {

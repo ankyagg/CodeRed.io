@@ -5,12 +5,9 @@ import { io } from 'socket.io-client';
  * In dev mode, connect to backend on port 3002.
  * In production (ngrok), connect to same origin.
  */
-// detect if we are running through the Hub or Ngrok
-const isHub = window.location.port === '3000' || window.location.hostname.includes('ngrok');
-
-const BACKEND_URL = isHub
-    ? '' // Use same host/port if going through Hub
-    : `http://${window.location.hostname}:3002`;
+const isDevFrontend = window.location.port === '5175';
+const BACKEND_URL = isDevFrontend ? `http://${window.location.hostname}:3002` : '';
+const isNgrok = window.location.hostname.includes('ngrok');
 
 console.log('🔌 Connecting to Multiplayer Server at:', BACKEND_URL || window.location.origin);
 
@@ -20,7 +17,5 @@ export const socket = io(BACKEND_URL, {
     autoConnect: true,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 5000,
-    extraHeaders: {
-        'ngrok-skip-browser-warning': 'true'
-    }
+    ...(isNgrok ? { extraHeaders: { 'ngrok-skip-browser-warning': 'true' } } : {})
 });

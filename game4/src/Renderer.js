@@ -45,67 +45,11 @@ export default class Renderer {
         // Transparent so CSS arena_bg.png shows through
         const { ctx, W, H } = this;
         ctx.clearRect(0, 0, W, H);
-
-        // Ground shadow gradient
-        const g = ctx.createLinearGradient(0, H * 0.7, 0, H);
-        g.addColorStop(0, 'rgba(6, 8, 15, 0)');
-        g.addColorStop(1, 'rgba(6, 8, 15, 0.85)');
-        ctx.fillStyle = g;
-        ctx.fillRect(0, H * 0.7, W, H * 0.3);
     }
 
     // ── Court floor (below grid) ──────────────────────────────────────────────
     _drawCourtArea() {
-        const { ctx } = this;
-        const left = C.GRID_LEFT - 15;
-        const right = C.GRID_LEFT + C.COLS * C.CELL + 15;
-        const top = C.GRID_BOTTOM + 4;
-        const bot = C.H - 10;
-
-        // Premium wood floor
-        const wood = ctx.createLinearGradient(0, top, 0, bot);
-        wood.addColorStop(0, '#5a381a');
-        wood.addColorStop(0.3, '#7d4f26');
-        wood.addColorStop(0.6, '#6b4322');
-        wood.addColorStop(1, '#3d2510');
-        ctx.fillStyle = wood;
-        ctx.fillRect(left - 20, top, right - left + 40, bot - top);
-
-        // Parquet lines
-        ctx.strokeStyle = 'rgba(0,0,0,0.35)';
-        ctx.lineWidth = 1;
-        for (let y = top + 15; y < bot; y += 18) {
-            ctx.beginPath();
-            ctx.moveTo(left - 20, y);
-            ctx.lineTo(right + 20, y);
-            ctx.stroke();
-        }
-
-        // NBA 2K Floor Decal
-        ctx.save();
-        ctx.translate(C.W / 2, top + (bot - top) / 2);
-        ctx.font = 'italic 900 64px "Barlow Condensed"';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = 'rgba(0,0,0,0.22)';
-        ctx.fillText('2K', 0, -5);
-        ctx.restore();
-
-        // Finish sheen
-        const sheen = ctx.createLinearGradient(left, top, right, bot);
-        sheen.addColorStop(0, 'rgba(255,255,255,0.06)');
-        sheen.addColorStop(0.5, 'rgba(255,255,255,0)');
-        sheen.addColorStop(1, 'rgba(255,255,255,0.02)');
-        ctx.fillStyle = sheen;
-        ctx.fillRect(left - 20, top, right - left + 40, bot - top);
-
-        // Bezel
-        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(left - 20, top);
-        ctx.lineTo(right + 20, top);
-        ctx.stroke();
+        // Removed to allow CSS full-width floor.
     }
 
     // ── Basketball hoops ──────────────────────────────────────────────────────
@@ -115,7 +59,7 @@ export default class Renderer {
 
     _drawHoop(col) {
         const { ctx } = this;
-        const cx = C.GRID_LEFT + col * C.CELL + C.CELL / 2;
+        const cx = C.GRID_LEFT + col * C.CELL_W + C.CELL_W / 2;
         const hy = C.HOOP_Y;
         const hw = C.HOOP_W / 2;
 
@@ -168,8 +112,8 @@ export default class Renderer {
         const { ctx } = this;
         const L = C.GRID_LEFT;
         const T = C.GRID_TOP;
-        const PW = C.COLS * C.CELL;
-        const PH = C.ROWS * C.CELL;
+        const PW = C.COLS * C.CELL_W;
+        const PH = C.ROWS * C.CELL_H;
         const D = 10;
 
         // Sides
@@ -210,10 +154,10 @@ export default class Renderer {
         ctx.strokeStyle = 'rgba(255,255,255,0.05)';
         ctx.lineWidth = 1;
         for (let c = 0; c <= C.COLS; c++) {
-            ctx.beginPath(); ctx.moveTo(L + c * C.CELL, T); ctx.lineTo(L + c * C.CELL, T + PH); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(L + c * C.CELL_W, T); ctx.lineTo(L + c * C.CELL_W, T + PH); ctx.stroke();
         }
         for (let r = 0; r <= C.ROWS; r++) {
-            ctx.beginPath(); ctx.moveTo(L, T + r * C.CELL); ctx.lineTo(L + PW, T + r * C.CELL); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(L, T + r * C.CELL_H); ctx.lineTo(L + PW, T + r * C.CELL_H); ctx.stroke();
         }
 
         // Holes
@@ -224,15 +168,15 @@ export default class Renderer {
 
     _cellXY(col, row) {
         return {
-            x: C.GRID_LEFT + col * C.CELL + C.CELL / 2,
-            y: C.GRID_TOP + (C.ROWS - 1 - row) * C.CELL + C.CELL / 2,
+            x: C.GRID_LEFT + col * C.CELL_W + C.CELL_W / 2,
+            y: C.GRID_TOP + (C.ROWS - 1 - row) * C.CELL_H + C.CELL_H / 2,
         };
     }
 
     _drawHole(col, row) {
         const { ctx } = this;
         const { x, y } = this._cellXY(col, row);
-        const r = C.CELL * 0.39;
+        const r = Math.min(C.CELL_W, C.CELL_H) * 0.39;
         const g = ctx.createRadialGradient(x - r * 0.2, y - r * 0.2, r * 0.05, x, y, r);
         g.addColorStop(0, '#060a12');
         g.addColorStop(0.75, '#04060b');
@@ -259,7 +203,7 @@ export default class Renderer {
                 const color = player === 1 ? C.COLORS.P1 : C.COLORS.P2;
                 const isWin = winSet.has(`${col},${row}`);
                 const pulse = isWin ? 1 + 0.12 * Math.sin(this._t * 0.15) : 1;
-                this._draw3dBall(x, y, C.CELL * 0.41 * pulse, color, isWin);
+                this._draw3dBall(x, y, Math.min(C.CELL_W, C.CELL_H) * 0.41 * pulse, color, isWin, player === 1);
             }
         }
     }
@@ -274,7 +218,7 @@ export default class Renderer {
         const ease = easeOutBounce(Math.min(1, progress * 1.05));
         const currY = startY + (y - startY) * ease;
         const scale = 1 + 0.18 * Math.max(0, 1 - progress * 3);
-        this._draw3dBall(x, currY, C.CELL * 0.41 * scale, color, false);
+        this._draw3dBall(x, currY, Math.min(C.CELL_W, C.CELL_H) * 0.41 * scale, color, false, player === 1);
     }
 
     _drawActiveBall() {
@@ -282,41 +226,105 @@ export default class Renderer {
         const ball = game.physics.activeBall;
         if (!ball) return;
         const { x, y } = ball.position;
+        const z = ball.z || 0;
+        const scale = C.SCALE_CLOSE - (z * (C.SCALE_CLOSE - C.SCALE_FAR));
+        const radius = C.BALL_R * scale;
+
         const isMyBall = !game.mp || game.currentPlayer === game.myPlayerId;
         const color = game.currentPlayer === 1 ? C.COLORS.P1 : C.COLORS.P2;
         const { ctx } = this;
         ctx.save();
         if (!isMyBall) {
             const pulse = 0.3 + 0.2 * Math.sin(this._t * 0.2);
-            ctx.beginPath(); ctx.arc(x, y, C.BALL_R + 8, 0, Math.PI * 2);
+            ctx.beginPath(); ctx.arc(x, y, radius + 8, 0, Math.PI * 2);
             ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.globalAlpha = pulse;
             ctx.shadowBlur = 18; ctx.shadowColor = color; ctx.stroke();
             ctx.shadowBlur = 0; ctx.globalAlpha = 1;
         }
         ctx.translate(x, y);
         ctx.rotate(ball.angle);
-        this._draw3dBall(0, 0, C.BALL_R, color, false);
+        this._draw3dBall(0, 0, radius, color, false, game.currentPlayer === 1);
         ctx.restore();
     }
 
-    _draw3dBall(x, y, r, color, glowing) {
+    _draw3dBall(x, y, r, color, glowing, isP1) {
         const { ctx } = this;
         ctx.save();
         if (glowing) { ctx.shadowBlur = 20; ctx.shadowColor = color; }
-        ctx.beginPath(); ctx.arc(x + 2, y + 3, r, 0, Math.PI * 2);
+
+        // Scaled shadow offset
+        const off = r * 0.1;
+        ctx.beginPath(); ctx.arc(x + off, y + off, r, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(0,0,0,0.38)'; ctx.fill();
+
+        ctx.shadowBlur = 0;
+
+        // Player 1: WNBA ball (mostly white, orange side panels) - 2nd from right in image
+        // Player 2: Wilson EVO NXT (bright orange) - 1st from right in image
+        const baseColor = isP1 ? '#f8f8f8' : '#ff7100';
+        const panelColor = isP1 ? '#f05b0c' : null;
+        const lineColor = '#1a1a1a';
+
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.save(); // apply clip constraints
+        ctx.clip();
+
+        // Base
+        ctx.fillStyle = baseColor;
+        ctx.fillRect(x - r, y - r, r * 2, r * 2);
+
+        // Optional secondary panels
+        if (isP1) {
+            ctx.fillStyle = panelColor;
+
+            // Left crescent panel (filling area between edge and inner ellipse)
+            ctx.beginPath();
+            ctx.arc(x, y, r, Math.PI / 2, Math.PI * 1.5);
+            ctx.ellipse(x - r * 0.28, y, r * 0.58, r, 0, Math.PI * 1.5, Math.PI / 2, true);
+            ctx.fill();
+
+            // Right crescent panel
+            ctx.beginPath();
+            ctx.arc(x, y, r, -Math.PI / 2, Math.PI / 2);
+            ctx.ellipse(x + r * 0.28, y, r * 0.58, r, 0, Math.PI / 2, -Math.PI / 2, true);
+            ctx.fill();
+        }
+
+        // Inner shading gradient
         const g = ctx.createRadialGradient(x - r * 0.35, y - r * 0.38, r * 0.04, x, y, r);
-        g.addColorStop(0, lighter(color, 80)); g.addColorStop(0.25, color);
-        g.addColorStop(0.7, darker(color, 20)); g.addColorStop(1, darker(color, 55));
-        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
-        const sw = Math.max(1, r * 0.07);
-        ctx.strokeStyle = 'rgba(0,0,0,0.32)'; ctx.lineWidth = sw;
+        g.addColorStop(0, 'rgba(255,255,255,0.25)');
+        g.addColorStop(0.35, 'rgba(255,255,255,0.0)');
+        g.addColorStop(0.75, 'rgba(0,0,0,0.15)');
+        g.addColorStop(1, 'rgba(0,0,0,0.6)');
+        ctx.fillStyle = g;
+        ctx.fillRect(x - r, y - r, r * 2, r * 2);
+
+        // Black grooves/lines
+        const sw = Math.max(1.8, r * 0.04);
+        ctx.strokeStyle = lineColor;
+        ctx.lineWidth = sw;
+        ctx.lineCap = 'round';
+        ctx.globalAlpha = 0.85;
+
+        // Horiz equator
         ctx.beginPath(); ctx.moveTo(x - r, y); ctx.lineTo(x + r, y); ctx.stroke();
-        ctx.beginPath(); ctx.arc(x - r * 0.18, y, r * 0.82, -0.35, 0.35); ctx.stroke();
-        ctx.beginPath(); ctx.arc(x + r * 0.18, y, r * 0.82, Math.PI - 0.35, Math.PI + 0.35); ctx.stroke();
+        // Vert pole
+        ctx.beginPath(); ctx.moveTo(x, y - r); ctx.lineTo(x, y + r); ctx.stroke();
+
+        // Left C-curve. It runs from top to bottom pole, bulging left.
+        ctx.beginPath(); ctx.ellipse(x - r * 0.28, y, r * 0.58, r, 0, -Math.PI / 2, Math.PI / 2); ctx.stroke();
+        // Right C-curve
+        ctx.beginPath(); ctx.ellipse(x + r * 0.28, y, r * 0.58, r, 0, -Math.PI / 2, Math.PI / 2); ctx.stroke();
+
+        ctx.restore(); // remove clip mask
+
+        // Static Specular gloss (light reflection on the very top face)
         const spec = ctx.createRadialGradient(x - r * 0.35, y - r * 0.42, 0, x - r * 0.2, y - r * 0.28, r * 0.55);
-        spec.addColorStop(0, 'rgba(255,255,255,0.58)'); spec.addColorStop(0.5, 'rgba(255,255,255,0.12)'); spec.addColorStop(1, 'rgba(255,255,255,0)');
+        spec.addColorStop(0, 'rgba(255,255,255,0.48)');
+        spec.addColorStop(0.5, 'rgba(255,255,255,0.1)');
+        spec.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fillStyle = spec; ctx.fill();
+
         ctx.restore();
     }
 
@@ -326,13 +334,14 @@ export default class Renderer {
         const { x, y } = C.SPAWN;
         const t = (this._t % 90) / 90;
         const a = 0.08 + 0.14 * Math.sin(t * Math.PI * 2);
+        const radius = (C.BALL_R * C.SCALE_CLOSE) + 12;
         ctx.setLineDash([5, 6]);
         ctx.strokeStyle = `rgba(255,255,255,${a})`; ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.arc(x, y, C.BALL_R + 12, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.stroke();
         ctx.setLineDash([]);
         ctx.fillStyle = `rgba(255,255,255,${a * 1.6})`;
         ctx.font = 'bold 11px Barlow, sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText('▲  DRAG DOWN TO AIM', x, y - C.BALL_R - 16);
+        ctx.fillText('▲  DRAG DOWN TO AIM', x, y - radius - 16);
         ctx.textAlign = 'left';
         const inp = this.game.input;
         if (inp.isDragging) this._drawRubberBand(inp.startPos, inp.currentPos);
@@ -344,16 +353,27 @@ export default class Renderer {
         const pts = inp.getPoints();
         if (pts.length < 2) return;
         const { ctx } = this;
-        ctx.save(); ctx.setLineDash([5, 7]); ctx.lineWidth = 2;
+        ctx.save(); ctx.setLineDash([5, 7]);
         for (let i = 0; i < pts.length - 1; i++) {
             const t = i / pts.length;
+            const pt = pts[i];
+            const nextPt = pts[i + 1];
+
+            // Trajectory scale logic
+            const z = Math.max(0, Math.min(1, (C.SPAWN.y - pt.y) / (C.SPAWN.y - C.HOOP_Y)));
+            const scale = C.SCALE_CLOSE - (z * (C.SCALE_CLOSE - C.SCALE_FAR));
+
+            ctx.lineWidth = 2 * scale;
             ctx.strokeStyle = `rgba(255,255,255,${0.55 * (1 - t)})`;
-            ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[i + 1].x, pts[i + 1].y); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(pt.x, pt.y); ctx.lineTo(nextPt.x, nextPt.y); ctx.stroke();
         }
         const end = pts[pts.length - 1];
+        const endZ = Math.max(0, Math.min(1, (C.SPAWN.y - end.y) / (C.SPAWN.y - C.HOOP_Y)));
+        const endScale = C.SCALE_CLOSE - (endZ * (C.SCALE_CLOSE - C.SCALE_FAR));
+
         ctx.setLineDash([]); ctx.globalAlpha = 0.22;
         const color = this.game.currentPlayer === 1 ? C.COLORS.P1 : C.COLORS.P2;
-        ctx.beginPath(); ctx.arc(end.x, end.y, C.BALL_R * 0.72, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill();
+        ctx.beginPath(); ctx.arc(end.x, end.y, C.BALL_R * endScale * 0.72, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill();
         ctx.restore();
     }
 
@@ -388,7 +408,7 @@ export default class Renderer {
         ctx.stroke(); ctx.restore();
         positions.forEach(p => {
             const color = game.winner === 1 ? C.COLORS.P1 : C.COLORS.P2;
-            this._draw3dBall(p.x, p.y, C.CELL * 0.46, color, true);
+            this._draw3dBall(p.x, p.y, Math.min(C.CELL_W, C.CELL_H) * 0.46, color, true, game.winner === 1);
         });
     }
 }

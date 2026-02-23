@@ -42,17 +42,58 @@ export default class InputController {
         this.currentPos = this._toCanvas(cx, cy);
     }
 
+    _getLaunchVelocity(dx, dy) {
+        let vx = dx * 0.12, vy = dy * 0.12;
+        const G = C.GRAVITY * 0.001 * Math.pow(1000 / 60, 2);
+        const FRICTION = 1 - 0.015;
+
+        // 1. Simulate trajectory to see where it crosses the hoops
+        let px = C.SPAWN.x, py = C.SPAWN.y;
+        let simVx = vx, simVy = vy;
+        let crossX = null;
+
+        for (let i = 0; i < 150; i++) {
+            let ppy = py, ppx = px;
+            simVx *= FRICTION;
+            simVy = (simVy * FRICTION) + G;
+            px += simVx;
+            py += simVy;
+
+            // Only care about falling DOWN through the hoop plane
+            if (ppy < C.HOOP_Y && py >= C.HOOP_Y) {
+                const t = (C.HOOP_Y - ppy) / (py - ppy);
+                crossX = ppx + t * (px - ppx);
+                break;
+            }
+        }
+
+        // 2. Aim Assist: Snap to exact hoop center
+        if (crossX !== null) {
+            const col = Math.floor((crossX - C.GRID_LEFT) / C.CELL_W);
+            // Must be within a valid column
+            if (col >= 0 && col < C.COLS) {
+                const targetX = C.GRID_LEFT + col * C.CELL_W + C.CELL_W / 2;
+                const curDelta = crossX - C.SPAWN.x;
+                const tgtDelta = targetX - C.SPAWN.x;
+                // Scale lateral velocity to precisely hit the target center
+                if (Math.abs(curDelta) > 0.01) {
+                    vx = vx * (tgtDelta / curDelta);
+                }
+            }
+        }
+
+        return { vx, vy };
+    }
+
     _end() {
         if (!this.isDragging || this.disabled) return;
         this.isDragging = false;
 
         const dx = this.startPos.x - this.currentPos.x;
         const dy = this.startPos.y - this.currentPos.y;
+        if (Math.hypot(dx, dy) < 6) return;
 
-        // Generous velocity scale so even small drags produce visible throws
-        const VEL = 0.12;
-        const vx = dx * VEL;
-        const vy = dy * VEL;
+        const { vx, vy } = this._getLaunchVelocity(dx, dy);
 
         if (Math.hypot(vx, vy) < 0.3) return;
         this.onThrow(vx, vy);
@@ -65,19 +106,19 @@ export default class InputController {
         const dy = this.startPos.y - this.currentPos.y;
         if (Math.hypot(dx, dy) < 6) return [];
 
-        const VEL = 0.12;
-        let vx = dx * VEL, vy = dy * VEL;
+        let { vx, vy } = this._getLaunchVelocity(dx, dy);
         let px = C.SPAWN.x, py = C.SPAWN.y;
         const pts = [];
-        const G = 0.9; // approx gravity per tick (matches Matter.js 60fps)
+        const G = C.GRAVITY * 0.001 * Math.pow(1000 / 60, 2);
+        const FRICTION = 1 - 0.015;
 
-        for (let i = 0; i < 80; i++) {
+        for (let i = 0; i < 140; i++) {
             pts.push({ x: px, y: py });
-            vx *= 0.99;
-            vy += G;
+            vx *= FRICTION;
+            vy = (vy * FRICTION) + G;
             px += vx;
             py += vy;
-            if (py > C.GRID_BOTTOM + 40) break;
+            if (py > C.H + 100) break;
         }
         return pts;
     }
