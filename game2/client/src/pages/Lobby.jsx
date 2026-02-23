@@ -42,9 +42,7 @@ export default function Lobby() {
         });
 
         newSocket.on('connect_error', (error) => {
-            console.error("Socket Connection Error:", error);
-            alert("Failed to connect to game server. Please ensure the backend is running on port 3003.");
-            newSocket.close();
+            console.warn("Socket Connection Error. Retrying...", error);
         });
     };
 

@@ -6,6 +6,7 @@ import { Chat } from './components/Chat.jsx';
 import { VoiceChat } from './components/VoiceChat.jsx';
 import { useSocket } from './hooks/useSocket.js';
 import { useVoiceChat } from './hooks/useVoiceChat.js';
+import { Loader } from '@react-three/drei';
 
 export default function App() {
     const [roomId, setRoomId] = useState(null);
@@ -81,6 +82,15 @@ export default function App() {
                 onJoin={joinVoice}
                 onLeave={leaveVoice}
                 onToggleMute={toggleMute}
+            />
+
+            <Loader
+                dataInterpolation={(p) => `Downloading Archive Securely... ${p.toFixed(0)}%`}
+                initialState={(active) => active}
+                containerStyles={{ background: '#050508', zIndex: 9999 }}
+                innerStyles={{ width: '400px', maxWidth: '80%' }}
+                barStyles={{ background: '#44aaff', height: '12px' }}
+                dataStyles={{ color: '#44aaff', fontFamily: "'Outfit', sans-serif", fontSize: '18px', letterSpacing: '2px', textTransform: 'uppercase' }}
             />
         </div>
     );
