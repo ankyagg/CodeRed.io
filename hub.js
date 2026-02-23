@@ -17,8 +17,8 @@ const serveOrProxy = (context, distPath, devTarget) => {
     if (fs.existsSync(fullDistPath)) {
         console.log(`📦 Serving ${context} from built files: ${distPath}`);
         app.use(context, express.static(fullDistPath));
-        // SPA Fallback for each game
-        app.get(`${context}/*`, (req, res, next) => {
+        // SPA Fallback for each game (Express 5 requires named param)
+        app.get(`${context}/*path`, (req, res, next) => {
             if (req.path.includes('.')) return next(); // Let static files through
             res.sendFile(path.join(fullDistPath, 'index.html'));
         });
