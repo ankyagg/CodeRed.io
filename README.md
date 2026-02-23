@@ -74,5 +74,7 @@ A tile-based open-world survival game.
 
 ---
 
+Live Demo : https://codered-io.onrender.com
+
 ## � The Team
-Developed with passion by **Aniket Walanj & Team CodeRed** for DevHacks.
+Developed with passion by **Aniket Walanj, Aryan Salunkhe, Manav Sonawne & Vanshita Varma** for DevHacks.
