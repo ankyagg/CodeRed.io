@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: codered-games
+    runtime: node
+    buildCommand: npm install && npm install --prefix backend && npm install --prefix game2/server && npm install --prefix game3 && npm install --prefix game4 && npm install --prefix frontend && npm install --prefix game2/client && npm run build
+    startCommand: node master.js
+    envVars:
+      - key: NODE_ENV
+        value: production
