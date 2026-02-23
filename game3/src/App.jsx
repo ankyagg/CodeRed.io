@@ -6,7 +6,27 @@ import { Chat } from './components/Chat.jsx';
 import { VoiceChat } from './components/VoiceChat.jsx';
 import { useSocket } from './hooks/useSocket.js';
 import { useVoiceChat } from './hooks/useVoiceChat.js';
-import { Loader } from '@react-three/drei';
+import { useProgress } from '@react-three/drei';
+
+function DarkRoomLoader() {
+    const { active, progress } = useProgress();
+    if (!active) return null;
+    return (
+        <div style={{
+            position: 'absolute', top: 0, left: 0, width: '100vw', height: '100vh',
+            background: '#040202', zIndex: 10000,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            color: '#ff2a2a', fontFamily: "'Outfit', sans-serif"
+        }}>
+            <h1 style={{ letterSpacing: '8px', fontSize: '32px', marginBottom: '20px', textShadow: '0 0 10px #ff2a2a' }}>DARK ROOM</h1>
+            <p style={{ letterSpacing: '4px', opacity: 0.8, marginBottom: '40px' }}>INITIALIZING SURVIVAL PROTOCOLS...</p>
+            <div style={{ width: '300px', height: '8px', background: '#330000', borderRadius: '4px', overflow: 'hidden' }}>
+                <div style={{ width: `${progress}%`, height: '100%', background: '#ff2a2a', transition: 'width 0.2s' }}></div>
+            </div>
+            <p style={{ marginTop: '20px', letterSpacing: '2px', fontSize: '14px' }}>{progress.toFixed(0)}% SYNCHRONIZED</p>
+        </div >
+    );
+}
 
 export default function App() {
     const [roomId, setRoomId] = useState(null);
@@ -84,14 +104,7 @@ export default function App() {
                 onToggleMute={toggleMute}
             />
 
-            <Loader
-                dataInterpolation={(p) => `Downloading Archive Securely... ${p.toFixed(0)}%`}
-                initialState={(active) => active}
-                containerStyles={{ background: '#050508', zIndex: 9999 }}
-                innerStyles={{ width: '400px', maxWidth: '80%' }}
-                barStyles={{ background: '#44aaff', height: '12px' }}
-                dataStyles={{ color: '#44aaff', fontFamily: "'Outfit', sans-serif", fontSize: '18px', letterSpacing: '2px', textTransform: 'uppercase' }}
-            />
+            <DarkRoomLoader />
         </div>
     );
 }

@@ -19,9 +19,8 @@ export default function Lobby() {
     }, [user, navigate]);
 
     const connectToRoom = (code) => {
-        // Dev: connect directly to backend on 3003.
-        // Production/ngrok: connect via proxy path /escape-socket which the game-hub-proxy forwards to port 3003.
-        const serverUrl = `${window.location.protocol}//${window.location.host}`;
+        const isDevFrontend = window.location.port === '5174';
+        const serverUrl = isDevFrontend ? `http://${window.location.hostname}:3003` : '';
         const socketPath = '/escape/socket.io';
 
         const isNgrok = window.location.hostname.includes('ngrok');
