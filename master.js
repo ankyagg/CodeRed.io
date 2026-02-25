@@ -11,8 +11,10 @@ const servers = [
     { name: 'DARKROOM', path: './game3/server.js' },
     { name: 'ESCAPE', path: './game2/server/server.js' },
     { name: 'HOOP4', path: './game4/server.js' },
+    { name: 'UNDERCOVER', path: './undercover/server/index.js' },
     { name: 'HUB', path: './hub.js' }
 ];
+
 
 console.log('🌟 [CODERED MASTER] Booting up all game sectors...\n');
 
@@ -36,9 +38,11 @@ function getPortFor(name) {
         case 'DARKROOM': return 3002;
         case 'ESCAPE': return 3003;
         case 'HOOP4': return 3004;
-        case 'HUB': return 3000;
+        case 'UNDERCOVER': return 3005;
+        case 'HUB': return process.env.PORT || 3000;
         default: return 0;
     }
 }
+
 
 console.log('\n🚀 ALL SYSTEMS NOMINAL. Master Hub on port 3000.');

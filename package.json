@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node master.js",
-    "build": "npm run build --prefix frontend && npm run build --prefix game2/client && npm run build --prefix game3 && npm run build --prefix game4",
+    "render-build": "npm install && npm install --prefix backend && npm install --prefix game2/server && npm install --prefix game3 && npm install --prefix game4 && npm install --prefix frontend && npm install --prefix game2/client && npm install --prefix undercover/server && npm install --prefix undercover/client && npm run build",
+    "build": "npm run build --prefix frontend && npm run build --prefix game2/client && npm run build --prefix game3 && npm run build --prefix game4 && npm run build --prefix undercover/client",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

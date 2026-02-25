@@ -52,10 +52,11 @@ serveOrProxy('/escape', './game2/client/dist', 'http://localhost:5174');
 
 // 3. Dark Room Survival
 app.use(createProxyMiddleware({
-    pathFilter: '/darkroom/socket.io',
+    pathFilter: ['/darkroom/socket.io', '/darkroom/api'],
     target: 'http://localhost:3002',
     ws: true,
-    changeOrigin: true
+    changeOrigin: true,
+    pathRewrite: { '^/darkroom/api': '/api' }
 }));
 serveOrProxy('/darkroom', './game3/dist', 'http://localhost:5175');
 
@@ -68,6 +69,19 @@ app.use(createProxyMiddleware({
     pathRewrite: { '^/hoop-ws': '' }
 }));
 serveOrProxy('/hoop', './game4/dist', 'http://localhost:5176');
+
+// 5. Undercover Game
+app.use(createProxyMiddleware({
+    pathFilter: '/undercover/socket.io',
+    target: 'http://localhost:3005',
+    ws: true,
+    changeOrigin: true
+}));
+serveOrProxy('/undercover', './undercover/client/dist', 'http://localhost:5177');
+
+
+
+
 
 
 // --- LANDING PAGE ---

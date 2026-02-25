@@ -60,17 +60,17 @@ A tile-based open-world survival game.
 ## � How to Run
 
 1.  **Clone & Install:**
-    ```bash
-    npm install
-    ```
+```bash
+npm install 
+```
 2.  **Build the World:**
     ```bash
     npm run build
     ```
 3.  **Start the Master Engine:**
-    ```bash
-    npm start
-    ```
+```bash
+npm start
+```
 
 ---
 

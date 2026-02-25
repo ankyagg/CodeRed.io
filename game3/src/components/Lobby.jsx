@@ -18,10 +18,10 @@ export function Lobby({ onJoin, connected }) {
     useEffect(() => {
         const fetchLb = async () => {
             try {
-                const url = import.meta.env.PROD
-                    ? `${window.location.origin}/darkroom/api/leaderboard`
-                    : 'http://localhost:3002/api/leaderboard';
-                const res = await fetch(url);
+                const leaderboardUrl = import.meta.env.VITE_API_URL
+                    ? `${import.meta.env.VITE_API_URL}/api/leaderboard`
+                    : '/darkroom/api/leaderboard';
+                const res = await fetch(leaderboardUrl);
                 if (res.ok) setLeaderboard(await res.json());
             } catch (e) {
                 console.error('Leaderboard fetch failed', e);
