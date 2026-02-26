@@ -55,7 +55,7 @@ const io = new Server(httpServer, {
 });
 
 const PORT = 3002;
-const TICK_RATE = 30;
+const TICK_RATE = 15;
 
 /** 
  * rooms[roomId] = { 
@@ -65,8 +65,8 @@ const TICK_RATE = 30;
  */
 const rooms = {};
 
-const DAY_CYCLE_SECONDS = 60; // 60 seconds total
-const NIGHT_THRESHOLD = 0.5; // 30s Day, 30s Night
+const DAY_CYCLE_SECONDS = 80; // 80 seconds total
+const NIGHT_THRESHOLD = 0.5; // 40s Day, 40s Night
 
 function updateAI(room) {
     const players = Object.values(room.players);
@@ -104,6 +104,7 @@ function updateAI(room) {
 
         players.forEach(p => {
             if (p.isHiding) return;
+            if (p.health <= 0) return;
             const dist = Math.sqrt(
                 Math.pow(p.position[0] - enemy.position[0], 2) +
                 Math.pow(p.position[2] - enemy.position[2], 2)
@@ -321,6 +322,7 @@ io.on('connection', (socket) => {
         if (currentRoomId && rooms[currentRoomId]) {
             delete rooms[currentRoomId].players[socket.id];
             io.to(currentRoomId).emit('playerLeft', socket.id);
+            socket.to(currentRoomId).emit('voice-peer-left', { peerId: socket.id });
 
             if (Object.keys(rooms[currentRoomId].players).length === 0) {
                 delete rooms[currentRoomId];

@@ -144,7 +144,7 @@ export function HUD({ health, battery, playerCount, connected, roomId, dayProgre
                 <div style={{ fontSize: 9, color: '#777', letterSpacing: 1, marginBottom: 2 }}>PHASE ENDS IN</div>
                 <div style={{ fontSize: 18, fontWeight: 'bold', color: statusColor, fontFamily: 'monospace' }}>
                     {(() => {
-                        const totalSec = 60;
+                        const totalSec = 80;
                         const nightThresh = 0.5;
                         let remaining = 0;
                         if (dayProgress < nightThresh) {

@@ -20,8 +20,16 @@ export function Enemy({ enemyData }) {
                 child.receiveShadow = true;
                 // Make it look creepy — darken the material
                 if (child.material) {
-                    child.material = child.material.clone();
-                    child.material.color.set('#1a3a5a');
+                    if (Array.isArray(child.material)) {
+                        child.material = child.material.map(m => {
+                            const newM = m.clone();
+                            if (newM.color) newM.color.set('#1a3a5a');
+                            return newM;
+                        });
+                    } else {
+                        child.material = child.material.clone();
+                        if (child.material.color) child.material.color.set('#1a3a5a');
+                    }
                 }
             }
         });
