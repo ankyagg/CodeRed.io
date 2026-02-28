@@ -377,7 +377,7 @@ io.on('connection', (socket) => {
 });
 
 // Catch-all route for SPA
-app.get('*', (req, res) => {
+app.get('/*path', (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
 });
 

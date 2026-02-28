@@ -19,26 +19,49 @@ export default function Lobby() {
     }, [user, navigate]);
 
     const connectToRoom = (code) => {
-        const isDevFrontend = window.location.port === '5174';
-        const serverUrl = isDevFrontend ? `http://${window.location.hostname}:3003` : '';
         const socketPath = '/escape/socket.io';
+        // When running on Render, the backend is on the same port, we just use the current origin
+        // In local vite dev (port 5174), we want to connect to localhost:3003
+        const isDevFrontend = window.location.port === '5174';
+
+        let serverUrl = '';
+        if (isDevFrontend) {
+            serverUrl = `http://${window.location.hostname}:3003`;
+        } else if (window.location.hostname.includes('render.com')) {
+            // Force WSS standard resolution for Render 
+            serverUrl = window.location.origin;
+        } else {
+            serverUrl = window.location.origin;
+        }
 
         const isNgrok = window.location.hostname.includes('ngrok');
+        const isRender = window.location.hostname.includes('render.com');
+
         const newSocket = io(serverUrl, {
             path: socketPath,
-            transports: ['polling', 'websocket'],
+            transports: isRender || isNgrok ? ['websocket', 'polling'] : ['polling', 'websocket'],
+            forceNew: true, // Force a new connection so 'connect' definitely fires, or handle existing correctly
+            secure: isRender || isNgrok || window.location.protocol === 'https:',
             ...(isNgrok ? { extraHeaders: { 'ngrok-skip-browser-warning': 'true' } } : {})
         });
 
-        newSocket.on('connect', () => {
+        const tryJoin = () => {
             newSocket.emit('join_room', { roomId: code, username: user?.username }, (response) => {
-                if (response.status === 'ok') {
+                if (response?.status === 'ok') {
                     setSocket(newSocket);
                     setRoom(code);
                     navigate(`/game/${code}`);
+                } else {
+                    console.error("Failed to join room:", response);
                 }
             });
-        });
+        };
+
+        if (newSocket.connected) {
+            tryJoin();
+        } else {
+            newSocket.once('connect', tryJoin);
+        }
 
         newSocket.on('connect_error', (error) => {
             console.warn("Socket Connection Error. Retrying...", error);

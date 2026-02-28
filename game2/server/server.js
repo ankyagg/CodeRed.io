@@ -40,7 +40,7 @@ io.on('connection', (socket) => {
 });
 
 // Fallback all routes to index.html for React Router compatibility
-app.get('*', (req, res) => {
+app.get('/*path', (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
 });
 

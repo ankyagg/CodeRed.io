@@ -256,7 +256,7 @@ export default function Scene({ players }) {
             {/* Practical UV Light if Lamp is OFF and Stage > 3 */}
             {lampOff && <pointLight position={[4, 2, -2]} intensity={3.0} color="#aa00ff" distance={6} decay={2} />}
             {/* Desk Practical Lamp Light */}
-            {!lampOff && <pointLight position={[4, 2.2, -3]} intensity={2.5} color="#ffddaa" distance={6} decay={2} castShadow />}
+            {!lampOff && <pointLight position={[4, 2.2, -3]} intensity={2.5} color="#ffddaa" distance={6} decay={2} />}
 
             {/* ARCHITECTURE */}
             {/* Floor */}
@@ -319,7 +319,7 @@ export default function Scene({ players }) {
             {/* --- ROUND 1 / ROUND 2 MECHANICS: BOOKSHELF --- */}
             <group position={[0.5, 0, -6.1]}>
                 {/* Specific Spotlight for the Shelf so it's not missed */}
-                <pointLight position={[2, 4, 2]} intensity={5} color="#fff" distance={10} decay={2} castShadow />
+                <pointLight position={[2, 4, 2]} intensity={5} color="#fff" distance={10} decay={2} />
 
                 {/* Main Shelf Body - Wood color */}
                 <Box position={[0, 2.5, 0]} args={[1.5, 5, 2]} receiveShadow castShadow><meshStandardMaterial color="#5c4033" roughness={0.7} /></Box>

@@ -157,13 +157,20 @@ export default function GameRoom() {
             {/* 3D Canvas */}
             <div className="absolute inset-0 flex items-center justify-center">
                 <ErrorBoundary>
-                    <Canvas shadows camera={{ position: [0, 1.9, 0], fov: 75 }} className="w-full h-full outline-none block" onClick={(e) => {
-                        // Re-acquire pointer lock if clicking on the background canvas
-                        const isLocked = document.pointerLockElement;
-                        if (!isLocked && !useStore.getState().isEscaped) {
-                            e.target.requestPointerLock();
-                        }
-                    }}>
+                    <Canvas
+                        shadows
+                        dpr={[1, 1.5]}
+                        performance={{ min: 0.5 }}
+                        camera={{ position: [0, 1.9, 0], fov: 75 }}
+                        className="w-full h-full outline-none block"
+                        onClick={(e) => {
+                            // Re-acquire pointer lock if clicking on the background canvas
+                            const isLocked = document.pointerLockElement;
+                            if (!isLocked && !useStore.getState().isEscaped) {
+                                e.target.requestPointerLock();
+                            }
+                        }}
+                    >
                         <color attach="background" args={['#1a1025']} />
                         <ambientLight intensity={0.8} />
                         <directionalLight position={[10, 20, 10]} intensity={1.5} castShadow shadow-mapSize={[1024, 1024]} />
