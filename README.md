@@ -1,80 +1,207 @@
 # 🔴 CodeRed.io: The Ultimate Multiplayer Game Hub
 
-Welcome to **CodeRed.io**, a comprehensive, multi-layered gaming platform built to deliver low-latency, real-time multiplayer experiences. This project isn't just a collection of games—it is a sophisticated micro-services architecture served through a unified gateway.
+[![Demo](https://img.shields.io/badge/demo-live-green)](https://codered-io.onrender.com) [![License](https://img.shields.io/badge/license-MIT-blue)](#license)
+
+A unified gateway for **four real‑time multiplayer games**, deployed on a single port with micro‑services architecture, reverse proxy routing, and a custom orchestrator.
+
+> This repository powered our award‑winning entry at **DevHacks 2025**.
 
 ---
 
-## 🚀 The Hub Architecture (The "How It's Made")
-
-Most web games struggle with CORS issues, port management, and fragmented domains. We solved this with a **Unified Gateway Hub**.
-
-### 1. The Gateway (`hub.js`)
-We use a central Express server acting as a **Reverse Proxy**. Using `http-proxy-middleware`, the Hub intercepts incoming requests:
-- `/survival` traffic goes to the 2D Survival engine.
-- `/darkroom` traffic goes to the 3D Horror engine.
-- `/hoop-ws` raw WebSocket traffic is rerouted specifically to the physics engine.
-This allows us to host everything on a **single port (3000)** while maintaining 4 high-performance backends behind the scenes.
-
-### 2. The Orchestrator (`master.js`)
-Managing 4 games and a hub manually is impossible. Our `master.js` script acts as a process manager. It boots all 5 servers (Survival, Darkroom, Escape, Hoop4, and Hub) simultaneously, monitors their health, and assigns them internal ports that are never exposed to the public internet, ensuring maximum security.
-
----
-
-## 🎮 The Games: Deep Dive
-
-### 1. 🌑 Dark Room Survival (3D Horror)
-This is a high-fidelity 3D experience built with **React Three Fiber**.
-*   **The Mechanic:** A 60-second Day/Night cycle. Players must restock supplies during the day because at night, the "Managers" (AI enemies) spawn.
-*   **AI Logic:** Enemies use a distance-based tracking algorithm. If you are not **Hiding** (C key), they calculate the shortest vector to your 3D position and chase you until you enter the light or die.
-*   **Technical Highlight:** Uses a custom Themed Loading Screen that blocks the main thread until the ~100MB of 3D assets are fully synchronized in the browser's GPU buffer.
-
-### 2. 🧩 Escape Room: The Manor (Co-op Puzzle)
-A narrative-driven puzzle game where room synchronization is everything.
-*   **The Mechanic:** A progressive 8-stage puzzle system. Actions in one player's screen (like align-book or insert-usb) update the `GameState` on the server, which immediately triggers animations for all other players in that room.
-*   **Communication:** Features an integrated **Chatbox** and **Voice Chat** signaling through WebRTC to allow players to coordinate their escape.
-
-### 3. 🏀 Hoop-4 (Physics Multiplayer)
-A competitive game that blends basketball with Connect-4 strategy.
-*   **The Mechanic:** Players take turns aiming shots. We integrated **Matter.js** (a 2D physics engine) on the client to predict the ball's trajectory, but the *actual* result is validated by the server to prevent cheating.
-*   **Procedural Graphics:** Instead of static images, the basketballs are procedurally rendered in 2D Canvas with 3D-shading gradients, allowing for dynamic WNBA and Wilson EVO NXT skins.
-
-### 4. 🌲 Survival Sandbox (Open World)
-A tile-based open-world survival game.
-*   **The Mechanic:** A shared grid-based map where every interaction—chopping a tree, placed a wall, or dropping an item—is sent as a "Delta Update" to the server.
-*   **Efficiency:** Instead of sending the whole map every time, only the "changed tiles" are broadcasted, reducing bandwidth by over 90%.
+## 📋 Table of Contents
+1. [Overview](#overview)
+2. [Architecture](#architecture)
+   * [Gateway](#gateway)
+   * [Orchestrator](#orchestrator)
+3. [Games](#games)
+4. [Tech Stack](#tech-stack)
+5. [Getting Started](#getting-started)
+6. [Deployment](#deployment)
+7. [Development](#development)
+8. [Contributing](#contributing)
+9. [Team](#team)
+10. [License](#license)
 
 ---
 
-## 🛠️ Tech Stack & Implementation
-
--   **Frontend:** React 18, React Three Fiber (3D), Tailwind CSS, Vanilla JS.
--   **Backend:** Node.js, Express 5.
--   **Real-time:** Socket.IO for state-heavy games, `ws` for high-throughput physics.
--   **Database:** MongoDB Atlas (Persistent Leaderboards).
--   **Optimization:** 
-    -   **Singapore Region:** Deployed to AWS Singapore via Render for sub-60ms Indian latency.
-    -   **Asset Bundling:** Vite-based code splitting to ensure fast initial loads.
+## 🎯 Overview
+CodeRed.io is a **modular platform** where each game runs in its own Node.js service behind a shared Express gateway. By routing all traffic through a single port, we eliminate CORS headaches, simplify deployment, and deliver a seamless experience for players across genres.
 
 ---
 
-## � How to Run
+## 🏗️ Architecture
 
-1.  **Clone & Install:**
-```bash
-npm install 
-```
-2.  **Build the World:**
-    ```bash
-    npm run build
-    ```
-3.  **Start the Master Engine:**
-```bash
-npm start
+### Gateway
+The entrypoint to the entire platform is `hub.js`, an Express 5 server that acts as a **reverse proxy**. Requests arriving on port 3000 are inspected and forwarded based on URL prefixes. The proxy uses `http-proxy-middleware` for HTTP routes and the native `ws` package for WebSocket tunnels.
+
+Configuration lives in `hub.config.js` (loadable with `require`) and defines:
+
+- **route table** mapping prefixes to targets (host:port)
+- **CORS policy** (wildcard for development, locked-down in production)
+- **logging level** (morgan middleware for access logs)
+
+Sample snippet:
+```js
+// hub.config.js
+module.exports = {
+  routes: [
+    {prefix: '/survival', target: 'http://localhost:4001'},
+    {prefix: '/darkroom', target: 'http://localhost:4002'},
+    {prefix: '/hoop-ws', target: 'ws://localhost:4003'},
+    {prefix: '/escape', target: 'http://localhost:4004'},
+  ],
+  port: process.env.PORT || 3000,
+};
 ```
 
+Path table:
+
+| Path        | Destination                  | Protocol | Notes |
+|-------------|------------------------------|----------|-------|
+| `/survival` | Survival sandbox service     | HTTP     | Express + Socket.IO |
+| `/darkroom` | 3D horror engine service     | HTTP     | React Three Fiber assets served statically |
+| `/hoop-ws`  | Physics engine (ws only)     | WebSocket| High‑throughput `ws` server |
+| `/escape`   | Escape room service          | HTTP     | State sync and WebRTC signaling |
+
+If a backend crashes or is unreachable the gateway returns a 502 and logs a stack trace to `logs/hub.log` (rotating daily). Health‑check endpoints (`/health`) are queried every 5s by the orchestrator.
+
+### Orchestrator
+`master.js` is a lightweight process manager built on `child_process.fork`. It reads `services.json` which specifies each game subdirectory and the command to start it.
+
+Key features:
+
+- **Dynamic port assignment**: unused ports in the 4000–5000 range are reserved at start and injected via `PORT` env var.
+- **Automatic restart**: crash events trigger a 3‑attempt backoff before giving up and emailing the dev team (via SendGrid API using `MAILER_API_KEY`).
+- **Logging**: stdout/stderr of each child is prefixed and written to `logs/{service}.log`.
+- **Graceful shutdown**: SIGINT/SIGTERM triggers children to close sockets before exit.
+
+Example `services.json`:
+```json
+[
+  {"name":"hub","dir":"."},
+  {"name":"survival","dir":"backend/survival"},
+  {"name":"darkroom","dir":"backend/darkroom"},
+  {"name":"hoop","dir":"backend/hoop"},
+  {"name":"escape","dir":"backend/escape"}
+]
+```
+
+Developers can run an individual game without the orchestrator by navigating to its folder and executing `npm run start`; the orchestrator simply wraps those commands.
+
+### Networking Summary
+Internally, the architecture uses a star topology: the hub is the single publicly exposed node and all game servers bind only to `127.0.0.1`. This prevents accidental exposure of service ports and simplifies firewall rules when deploying to cloud providers.
+
+Environment variables used across services:
+
+- `PORT` – port to listen on (assigned by orchestrator or set manually)
+- `MONGO_URI` – connection string for MongoDB Atlas
+- `NODE_ENV` – `development` | `production` (controls logging, caching, asset bundling)
+- `JWT_SECRET` – secret used for signing auth tokens (escape room)
+
+Troubleshooting network issues: check `logs/hub.log` for proxy errors, and use `curl -v http://localhost:3000/health` to verify end‑to‑end connectivity.
+
 ---
 
-Live Demo : https://codered-io.onrender.com
+## 🎮 Games
+A quick summary of each experience.  Detailed design docs live in `/docs`.
 
-## � The Team
-Developed with passion by **Aniket Walanj, Aryan Salunkhe, Manav Sonawne & Vanshita Varma** for DevHacks.
+### 🌑 Dark Room Survival (3D Horror)
+- Built with **React Three Fiber**
+- 60‑second day/night cycle, AI "Managers" hunt players outside light
+- Custom loader synchronizes ~100 MB of 3D assets directly to GPU buffers
+
+### 🧩 Escape Room: The Manor
+- Co‑op puzzle with 8 sequential stages
+- Real‑time `GameState` sync triggers animations across clients
+- Chat + WebRTC voice chat integrated for teamwork
+
+### 🏀 Hoop‑4 (Physics Multiplayer)
+- Turn‑based basketball meets Connect‑4
+- Client uses **Matter.js** for aiming predictions; server validates results
+- Procedural 2D canvas rendering supports dynamic skins
+
+### 🌲 Survival Sandbox (Open World)
+- Tile‑based shared map with delta updates (changed tiles only)
+- Bandwidth reduction >90% compared to full map sync
+
+### 🕵️ Undercover (Stealth Multiplayer)
+- Social deduction style minigame with hidden roles and objective syncing
+- Built with React + Tailwind front end, Socket.IO for lobby/state management
+- Server-driven role assignment and win-condition checks keep gameplay fair
+
+---
+
+## 🛠️ Tech Stack
+- **Frontend:** React 18, Tailwind CSS, Vite, React Three Fiber
+- **Backend:** Node.js (v20+), Express 5, ws, Socket.IO
+- **Database:** MongoDB Atlas (leaderboards & persistence)
+- **Deployment:** Render (Singapore) for <60 ms latency to India
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 20 or later
+- MongoDB connection string (set `MONGO_URI` in `.env`)
+
+### Installation
+```bash
+git clone https://github.com/your-org/DevHacks-CodeRed.git
+cd DevHacks-CodeRed
+npm install
+cd backend && npm install && cd ..
+```
+
+### Build & Run
+```bash
+npm run build     # compiles frontend bundles
+npm start         # launches master.js orchestrator
+```
+Open `http://localhost:3000` in your browser and navigate to `/survival`, `/darkroom`, etc.
+
+---
+
+## ☁️ Deployment
+The project is configured for Render.com.  A single `render.yaml` file provisions all five services with internal port routing.
+
+### To deploy manually
+1. Push to a Git repo connected to Render
+2. Create a web service for the hub (`hub.js`) listening on 3000
+3. Add background workers for each game service using `npm start` in their folders
+
+Environment variables: `MONGO_URI`, `PORT=3000`, any API keys.
+
+---
+
+## 🛠 Development
+- Use `npm run dev` to start the hub and game servers locally with hot reload
+- `/tools` contains helper scripts (port finder, process monitor)
+- Client assets sit under `frontend/`, `game2/`, etc.  Each game is self‑contained.
+
+Tests are minimal; add more before expanding features.
+
+---
+
+## 🤝 Contributing
+Contributions are welcome!  Please fork the repo, make your changes on a feature branch, and open a PR.  Follow the existing code style (Prettier + ESLint).
+
+1. Fork it
+2. Create your feature branch (`git checkout -b feature/foo`)
+3. Commit your changes (`git commit -am 'Add foo'`)
+4. Push to the branch (`git push origin feature/foo`)
+5. Open a pull request
+
+---
+
+## 👥 Team
+- Aniket Walanj
+- Aryan Salunkhe
+- Manav Sonawne
+- Vanshita Varma
+
+---
+
+## 📄 License
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
